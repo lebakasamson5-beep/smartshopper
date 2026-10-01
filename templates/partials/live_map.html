@@ -1,0 +1,206 @@
+﻿<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<section class="card" id="liveMapCard">
+    <h2>📍 Shops near you</h2>
+    <p id="mapStatus" style="color:var(--muted);margin:6px 0 14px">
+        Waiting for your location…
+    </p>
+
+    <div id="liveMap"></div>
+    <ul id="shopDistances"></ul>
+</section>
+
+<style>
+    #liveMap {
+        height: 380px;
+        border-radius: 14px;
+        border: 2px solid var(--line);
+        z-index: 1;
+    }
+
+    #shopDistances {
+        list-style: none;
+        margin-top: 16px;
+        display: grid;
+        gap: 10px;
+    }
+
+    #shopDistances li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border-radius: 14px;
+        background: var(--bg);
+        border: 2px solid var(--line);
+    }
+
+    #shopDistances li strong {
+        font-family: 'Bricolage Grotesque', sans-serif;
+    }
+
+    #shopDistances li:first-child {
+        border-color: var(--mint);
+    }
+</style>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+(function () {
+    const SHOPS = {{ shops|default([])|tojson }};
+
+    const map = L.map('liveMap').setView([-29.8587, 31.0218], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const shopMarkers = SHOPS
+        .filter(s => s.lat != null && s.lng != null)
+        .map(s =>
+            L.marker([s.lat, s.lng])
+                .addTo(map)
+                .bindPopup(
+                    `<b>${escapeHtml(s.name || 'Shop')}</b><br>${escapeHtml(s.address || '')}`
+                )
+        );
+
+    const me = L.circleMarker([0, 0], {
+        radius: 9,
+        color: '#fff',
+        weight: 3,
+        fillColor: '#5B2EFF',
+        fillOpacity: 1
+    });
+
+    const accuracy = L.circle([0, 0], {
+        radius: 0,
+        color: '#5B2EFF',
+        weight: 1,
+        fillOpacity: 0.08
+    });
+
+    let firstFix = true;
+
+    function escapeHtml(value) {
+        return String(value)
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+
+    function distance(lat1, lon1, lat2, lon2) {
+        const R = 6371000;
+        const rad = d => d * Math.PI / 180;
+
+        const dLat = rad(lat2 - lat1);
+        const dLon = rad(lon2 - lon1);
+
+        const a =
+            Math.sin(dLat / 2) ** 2 +
+            Math.cos(rad(lat1)) *
+            Math.cos(rad(lat2)) *
+            Math.sin(dLon / 2) ** 2;
+
+        return 2 * R * Math.asin(Math.sqrt(a));
+    }
+
+    function fmt(m) {
+        return m < 1000
+            ? Math.round(m) + ' m'
+            : (m / 1000).toFixed(1) + ' km';
+    }
+
+    function renderList(lat, lng) {
+        const list = SHOPS
+            .filter(s => s.lat != null && s.lng != null)
+            .map((s, i) => ({
+                ...s,
+                i,
+                d: distance(lat, lng, s.lat, s.lng)
+            }))
+            .sort((a, b) => a.d - b.d);
+
+        document.getElementById('shopDistances').innerHTML =
+            list.map(s => `
+                <li>
+                    <span>
+                        <strong>${escapeHtml(s.name || 'Shop')}</strong><br>
+                        <small style="color:var(--muted)">
+                            ${escapeHtml(s.address || '')}
+                        </small>
+                    </span>
+
+                    <span class="badge purple">
+                        ${fmt(s.d)}
+                    </span>
+                </li>
+            `).join('');
+    }
+
+    function onPosition(pos) {
+        const {
+            latitude: lat,
+            longitude: lng,
+            accuracy: acc
+        } = pos.coords;
+
+        if (firstFix) {
+            me.addTo(map);
+            accuracy.addTo(map);
+
+            const layers = [me, ...shopMarkers];
+
+            if (layers.length > 0) {
+                const group = L.featureGroup(layers);
+                me.setLatLng([lat, lng]);
+                map.fitBounds(group.getBounds().pad(0.2));
+            }
+
+            firstFix = false;
+        }
+
+        me.setLatLng([lat, lng]);
+
+        accuracy
+            .setLatLng([lat, lng])
+            .setRadius(acc);
+
+        document.getElementById('mapStatus').textContent =
+            `Live location active (±${Math.round(acc)} m)`;
+
+        renderList(lat, lng);
+    }
+
+    function onError(err) {
+        const msgs = {
+            1: 'Location permission denied. Allow it in your browser to see distances.',
+            2: 'Your location is unavailable right now.',
+            3: 'Location request timed out.'
+        };
+
+        document.getElementById('mapStatus').textContent =
+            msgs[err.code] || 'Could not get location.';
+    }
+
+    if ('geolocation' in navigator) {
+        navigator.geolocation.watchPosition(
+            onPosition,
+            onError,
+            {
+                enableHighAccuracy: true,
+                maximumAge: 5000,
+                timeout: 15000
+            }
+        );
+    } else {
+        document.getElementById('mapStatus').textContent =
+            'Geolocation is not supported by this browser.';
+    }
+})();
+</script>
