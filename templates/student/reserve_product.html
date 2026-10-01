@@ -1,0 +1,184 @@
+﻿{% extends "base.html" %}
+
+{% block title %}
+Reserve {{ product.name }} - SmartShop AI
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-container">
+
+    <div class="section-heading-row">
+
+        <div>
+
+            <p class="small-heading">
+                PRODUCT RESERVATION
+            </p>
+
+            <h1>
+                Reserve Product
+            </h1>
+
+            <p>
+                Temporarily reserve this product for up to 3 days.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="dashboard-card">
+
+        <h2>
+            {{ product.name }}
+        </h2>
+
+        <p>
+            {{ product.description }}
+        </p>
+
+        <p>
+            <strong>
+                Category:
+            </strong>
+
+            {{ product.category }}
+        </p>
+
+        <p>
+            <strong>
+                Shop:
+            </strong>
+
+            {{ product.shop_name }}
+        </p>
+
+        {% if product.location %}
+
+        <p>
+            <strong>
+                Location:
+            </strong>
+
+            {{ product.location }}
+        </p>
+
+        {% endif %}
+
+        <p>
+            <strong>
+                Price:
+            </strong>
+
+            R{{ "%.2f"|format(product.price) }}
+        </p>
+
+        <p>
+            <strong>
+                Available Stock:
+            </strong>
+
+            {{ product.stock_quantity }}
+        </p>
+
+
+        <hr>
+
+
+        <form
+            method="POST"
+            action="{{ url_for(
+                'student.reserve_product',
+                product_id=product.id
+            ) }}"
+        >
+
+            <div class="form-group">
+
+                <label for="quantity">
+                    Quantity
+                </label>
+
+                <input
+                    type="number"
+                    id="quantity"
+                    name="quantity"
+                    min="1"
+                    max="{{ product.stock_quantity }}"
+                    value="1"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="start_date">
+                    Reservation Start Date
+                </label>
+
+                <input
+                    type="date"
+                    id="start_date"
+                    name="start_date"
+                    min="{{ today.isoformat() }}"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="end_date">
+                    Reservation End Date
+                </label>
+
+                <input
+                    type="date"
+                    id="end_date"
+                    name="end_date"
+                    min="{{ today.isoformat() }}"
+                    required
+                >
+
+            </div>
+
+
+            <div class="flash success">
+
+                <strong>
+                    Reservation rule:
+                </strong>
+
+                Products may be reserved for a maximum of
+                <strong>3 days</strong>.
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="btn-primary"
+            >
+                Confirm Reservation
+            </button>
+
+
+            <a
+                href="{{ url_for('student.products') }}"
+                class="btn"
+            >
+                Back to Products
+            </a>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

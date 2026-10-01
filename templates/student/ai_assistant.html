@@ -1,0 +1,299 @@
+﻿{% extends "base.html" %}
+
+{% block title %}AI Assistant - SmartShop AI{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+
+    <div class="section-heading-row">
+        <div>
+            <p class="small-heading">SMARTSHOP AI</p>
+            <h1>🧠 Basket Analysis</h1>
+            <p>Smart price comparison across stores for your shopping list.</p>
+        </div>
+    </div>
+
+
+    {% if not list_items %}
+
+    <div class="dashboard-card" style="text-align:center; padding: 60px 30px;">
+        <div style="font-size: 54px; margin-bottom: 12px;">🛒</div>
+        <h2>Your shopping list is empty</h2>
+        <p style="color: #666; margin-top: 8px;">
+            Add a few products from the Marketplace or the Budget Planner
+            and I'll analyse the best store to buy them from.
+        </p>
+        <a href="{{ url_for('student.products') }}" class="btn-primary" style="margin-top: 16px;">
+            Browse Products
+        </a>
+    </div>
+
+    {% else %}
+
+    <div class="ai-thinking">
+        <div class="ai-brain">🧠</div>
+        <div>
+            <strong>Analysis complete in {{ analysis.thinking_time_ms }} ms</strong>
+            <p class="small-heading">
+                Analysed {{ analysis.item_count }} item{% if analysis.item_count != 1 %}s{% endif %}
+                across multiple stores.
+            </p>
+        </div>
+    </div>
+
+
+    <!-- ==========================================
+         SUMMARY CARDS
+         ========================================== -->
+    <section class="budget-overview">
+
+        <div class="budget-card">
+            <h3>Your Basket</h3>
+            <h2>R {{ "%.2f"|format(analysis.total_price) }}</h2>
+            <p class="small-heading">
+                {{ analysis.item_count }} items · {{ analysis.total_units }} units
+            </p>
+        </div>
+
+        <div class="budget-card {% if analysis.total_savings > 0 %}success{% endif %}">
+            <h3>Potential Savings</h3>
+            <h2>R {{ "%.2f"|format(analysis.total_savings) }}</h2>
+            <p class="small-heading">
+                {% if analysis.switches %}
+                    Across {{ analysis.switches | length }} item{% if analysis.switches | length != 1 %}s{% endif %}
+                {% else %}
+                    No alternatives found
+                {% endif %}
+            </p>
+        </div>
+
+        {% if analysis.cheapest_complete %}
+        <div class="budget-card">
+            <h3>Best Complete Basket</h3>
+            <h2>R {{ "%.2f"|format(analysis.cheapest_complete.total) }}</h2>
+            <p class="small-heading">
+                All {{ analysis.item_count }} items at
+                <strong>{{ analysis.cheapest_complete.name }}</strong>
+            </p>
+        </div>
+        {% endif %}
+
+    </section>
+
+
+    <!-- ==========================================
+         STORE COMPARISON
+         ========================================== -->
+    <section class="dashboard-card" style="margin-top: 30px;">
+
+        <div class="section-header">
+            <div>
+                <h2>🏪 Store Comparison</h2>
+                <p>Total cost of your basket at each store.</p>
+            </div>
+        </div>
+
+        <div class="ai-store-list">
+            {% for s in analysis.stores %}
+            <div class="ai-store-row
+                        {% if loop.index == 1 %}winner{% endif %}
+                        {% if not s.complete %}incomplete{% endif %}">
+
+                <div class="ai-store-rank">
+                    {% if loop.index == 1 %}🥇
+                    {% elif loop.index == 2 %}🥈
+                    {% elif loop.index == 3 %}🥉
+                    {% else %}#{{ loop.index }}
+                    {% endif %}
+                </div>
+
+                <div class="ai-store-info">
+                    <strong>{{ s.name }}</strong>
+                    <p class="small-heading">
+                        {{ s.items_found }} of {{ s.items_total }} items found
+                        {% if s.missing %}
+                            · missing: {{ s.missing | join(", ") }}
+                        {% endif %}
+                    </p>
+                </div>
+
+                <div class="ai-store-total">
+                    <strong>R {{ "%.2f"|format(s.total) }}</strong>
+                    {% if s.savings > 0 %}
+                        <span class="ai-save">Save R {{ "%.2f"|format(s.savings) }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="ai-store-badge">
+                    {% if s.complete %}
+                        <span class="badge-ok">✅ Complete</span>
+                    {% else %}
+                        <span class="badge-warn">⚠ Partial</span>
+                    {% endif %}
+                </div>
+
+            </div>
+            {% endfor %}
+        </div>
+
+    </section>
+
+
+    <!-- ==========================================
+         PER-ITEM ALTERNATIVES
+         ========================================== -->
+    {% if analysis.switches %}
+
+    <section class="dashboard-card" style="margin-top: 30px;">
+
+        <div class="section-header">
+            <div>
+                <h2>🔍 Item Alternatives</h2>
+                <p>Every item in your basket and its options across stores.</p>
+            </div>
+        </div>
+
+        <div class="ai-switch-list">
+
+            {% for sw in analysis.switches %}
+
+            <div class="ai-switch-card
+                        {% if sw.is_worse %}worse{% elif sw.is_best %}best{% endif %}">
+
+                <!-- HEADER -->
+                <div class="ai-switch-head">
+
+                    <div class="ai-switch-title">
+                        <strong>{{ sw.name }}</strong>
+                        <p class="small-heading">
+                            Qty {{ sw.quantity }} ·
+                            You paid
+                            <strong>R {{ "%.2f"|format(sw.current_price) }}</strong>
+                            at <strong>{{ sw.current_store }}</strong>
+                        </p>
+                    </div>
+
+                    {% if sw.is_worse %}
+                        <span class="ai-pill warn">
+                            ⚠ You can save R {{ "%.2f"|format(sw.savings) }}
+                            ({{ "%.1f"|format(sw.savings_pct) }}%)
+                        </span>
+                    {% elif sw.is_best %}
+                        <span class="ai-pill ok">
+                            ✅ You picked the cheapest
+                        </span>
+                    {% else %}
+                        <span class="ai-pill neutral">
+                            Alternatives available
+                        </span>
+                    {% endif %}
+
+                </div>
+
+                <!-- OPTIONS -->
+                <div class="ai-options-grid">
+
+                    {% for opt in sw.options %}
+
+                    <div class="ai-option
+                                {% if opt.price == sw.cheapest.price %}cheapest{% endif %}
+                                {% if opt.store == sw.current_store and opt.price == sw.current_price %}current{% endif %}">
+
+                        <div class="ai-option-store">
+                            {{ opt.store }}
+                            {% if opt.price == sw.cheapest.price %}
+                                <span class="ai-tag-cheap">CHEAPEST</span>
+                            {% endif %}
+                            {% if opt.store == sw.current_store and opt.price == sw.current_price %}
+                                <span class="ai-tag-current">YOUR PICK</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="ai-option-price">
+                            R {{ "%.2f"|format(opt.price) }}
+                        </div>
+
+                        {% if opt.price < sw.current_price and opt.store != sw.current_store %}
+                            <div class="ai-option-save">
+                                Save R {{ "%.2f"|format((sw.current_price - opt.price) * sw.quantity) }}
+                            </div>
+                        {% endif %}
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+        {% if analysis.total_savings > 0 %}
+            <p class="small-heading" style="margin-top: 16px;">
+                💰 Switching every item above saves you
+                <strong>R {{ "%.2f"|format(analysis.total_savings) }}</strong>
+                on this basket.
+            </p>
+        {% endif %}
+
+    </section>
+
+    {% else %}
+
+    <section class="dashboard-card" style="margin-top: 30px;">
+        <h2>✨ No alternatives found</h2>
+        <p style="color: #666; margin-top: 8px;">
+            We couldn't find other stores selling these items.
+        </p>
+    </section>
+
+    {% endif %}
+
+
+    <!-- ==========================================
+         BUDGET WARNINGS
+         ========================================== -->
+    {% if analysis.budget_warnings %}
+    <section class="dashboard-card" style="margin-top: 30px;">
+        <div class="section-header">
+            <div>
+                <h2>⚠ Budget Warnings</h2>
+                <p>These categories are over their estimate.</p>
+            </div>
+        </div>
+
+        <div class="ai-warnings">
+            {% for w in analysis.budget_warnings %}
+            <div class="ai-warning-row">
+                <strong>{{ w.category }}</strong>
+                <span>
+                    Spent R {{ "%.2f"|format(w.spent) }}
+                    of R {{ "%.2f"|format(w.limit) }}
+                    · over by <strong>R {{ "%.2f"|format(w.over_by) }}</strong>
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+
+    <!-- ==========================================
+         ACTIONS
+         ========================================== -->
+    <div class="ai-actions">
+        <a href="{{ url_for('student.budget_dashboard') }}" class="btn">
+            🛍️ Keep Shopping
+        </a>
+        <a href="{{ url_for('student.reservations') }}" class="btn-primary">
+            📦 View Shopping List
+        </a>
+    </div>
+
+    {% endif %}
+
+</div>
+{% endblock %}

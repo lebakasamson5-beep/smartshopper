@@ -1,0 +1,696 @@
+{% extends "base.html" %}
+
+{% block title %}
+Deals & Sales - SmartShop AI
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-container">
+
+    <!-- PAGE HEADER -->
+    <div class="section-heading-row">
+
+        <div>
+
+            <p class="small-heading">
+                COMPANY DEALS
+            </p>
+
+            <h1>
+                Deals & Special Sales
+            </h1>
+
+            <p>
+                Create special offers and promotions for students.
+                All new deals require admin approval.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- CREATE DEAL -->
+    <div class="dashboard-card">
+
+        <h2>
+            Create New Deal
+        </h2>
+
+        <p>
+            Submit a special offer for one of your products.
+        </p>
+
+        <form
+            method="POST"
+            action="{{ url_for('company.add_deal') }}"
+        >
+
+            <!-- DEAL TITLE -->
+            <div class="form-group">
+
+                <label for="title">
+                    Deal Title
+                </label>
+
+                <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    placeholder="Example: Student Hoodie Special"
+                    required
+                >
+
+            </div>
+
+
+            <!-- PRODUCT -->
+            <div class="form-group">
+
+                <label for="product_id">
+                    Select Product
+                </label>
+
+                <select
+                    id="product_id"
+                    name="product_id"
+                    required
+                >
+
+                    <option
+                        value=""
+                        data-price=""
+                    >
+                        Select a product
+                    </option>
+
+                    {% for product in products %}
+
+                    <option
+                        value="{{ product.id }}"
+                        data-price="{{ product.price }}"
+                    >
+                        {{ product.name }}
+                        - R{{ "%.2f"|format(product.price) }}
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <!-- DESCRIPTION -->
+            <div class="form-group">
+
+                <label for="description">
+                    Deal Description
+                </label>
+
+                <textarea
+                    id="description"
+                    name="description"
+                    rows="4"
+                    placeholder="Explain what makes this deal special..."
+                ></textarea>
+
+            </div>
+
+
+            <!-- PRICES -->
+            <div
+                style="
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 20px;
+                "
+            >
+
+                <!-- ORIGINAL PRICE -->
+                <div class="form-group">
+
+                    <label for="original_price">
+                        Original Price (R)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="original_price"
+                        name="original_price"
+                        step="0.01"
+                        min="0.01"
+                        placeholder="Select a product"
+                        readonly
+                        required
+                    >
+
+                    <small>
+                        Automatically taken from the selected product.
+                    </small>
+
+                </div>
+
+
+                <!-- SALE PRICE -->
+                <div class="form-group">
+
+                    <label for="sale_price">
+                        Sale Price (R)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="sale_price"
+                        name="sale_price"
+                        step="0.01"
+                        min="0"
+                        placeholder="Enter sale price"
+                        required
+                    >
+
+                    <small id="sale-price-help">
+                        Sale price must be lower than the original price.
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <!-- DISCOUNT PREVIEW -->
+            <div
+                class="budget-total"
+                id="discount-preview"
+                style="display: none;"
+            >
+
+                <strong>
+                    Discount:
+                </strong>
+
+                <span id="discount-percentage">
+                    0%
+                </span>
+
+            </div>
+
+
+            <!-- DATES -->
+            <div
+                style="
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 20px;
+                "
+            >
+
+                <!-- START DATE -->
+                <div class="form-group">
+
+                    <label for="start_date">
+                        Deal Start Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="start_date"
+                        name="start_date"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- END DATE -->
+                <div class="form-group">
+
+                    <label for="end_date">
+                        Deal End Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="end_date"
+                        name="end_date"
+                        required
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- INFORMATION -->
+            <div class="flash success">
+
+                <strong>
+                    Important:
+                </strong>
+
+                New deals are automatically submitted as
+                <strong>
+                    Pending Approval
+                </strong>.
+
+                An administrator must approve the deal before
+                students can see it.
+
+            </div>
+
+
+            <!-- SUBMIT -->
+            <button
+                type="submit"
+                class="btn-primary"
+            >
+                Submit Deal for Approval
+            </button>
+
+        </form>
+
+    </div>
+
+
+    <!-- EXISTING DEALS -->
+    <div class="section-header">
+
+        <div>
+
+            <h2>
+                Your Deals
+            </h2>
+
+            <p>
+                View the deals submitted by your company.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    {% if deals %}
+
+        <div class="product-grid">
+
+            {% for deal in deals %}
+
+            <div class="product-card">
+
+                <!-- DEAL HEADER -->
+                <div class="product-image">
+
+                    <span>
+                        SPECIAL SALE
+                    </span>
+
+                </div>
+
+
+                <div class="product-content">
+
+                    <!-- STATUS -->
+                    <p class="product-category">
+
+                        {{ deal.status|upper }}
+
+                    </p>
+
+
+                    <!-- TITLE -->
+                    <h3>
+                        {{ deal.title }}
+                    </h3>
+
+
+                    <!-- DESCRIPTION -->
+                    {% if deal.description %}
+
+                    <p>
+                        {{ deal.description }}
+                    </p>
+
+                    {% endif %}
+
+
+                    <!-- PRODUCT -->
+                    {% if deal.product %}
+
+                    <p>
+
+                        <strong>
+                            Product:
+                        </strong>
+
+                        {{ deal.product.name }}
+
+                    </p>
+
+                    {% endif %}
+
+
+                    <!-- ORIGINAL PRICE -->
+                    <p>
+
+                        <strong>
+                            Original Price:
+                        </strong>
+
+                        <span
+                            style="
+                                text-decoration: line-through;
+                            "
+                        >
+                            R{{ "%.2f"|format(deal.original_price) }}
+                        </span>
+
+                    </p>
+
+
+                    <!-- SALE PRICE -->
+                    <p>
+
+                        <strong>
+                            Sale Price:
+                        </strong>
+
+                        R{{ "%.2f"|format(deal.sale_price) }}
+
+                    </p>
+
+
+                    <!-- DISCOUNT -->
+                    <p>
+
+                        <strong>
+                            Discount:
+                        </strong>
+
+                        {{ deal.discount_percentage() }}%
+
+                    </p>
+
+
+                    <!-- DATES -->
+                    <p>
+
+                        <strong>
+                            Starts:
+                        </strong>
+
+                        {{ deal.start_date.strftime("%d %B %Y") }}
+
+                    </p>
+
+
+                    <p>
+
+                        <strong>
+                            Ends:
+                        </strong>
+
+                        {{ deal.end_date.strftime("%d %B %Y") }}
+
+                    </p>
+
+
+                    <!-- PENDING -->
+                    {% if deal.status == "pending" %}
+
+                    <div class="flash">
+
+                        ⏳
+
+                        <strong>
+                            Pending Approval
+                        </strong>
+
+                        <br>
+
+                        Waiting for an administrator to review
+                        this deal.
+
+                    </div>
+
+
+                    <!-- APPROVED -->
+                    {% elif deal.status == "approved" %}
+
+                    <div class="flash success">
+
+                        ✅
+
+                        <strong>
+                            Approved
+                        </strong>
+
+                        <br>
+
+                        This deal can be displayed to students.
+
+                    </div>
+
+
+                    <!-- REJECTED -->
+                    {% elif deal.status == "rejected" %}
+
+                    <div class="flash error">
+
+                        ❌
+
+                        <strong>
+                            Rejected
+                        </strong>
+
+                        <br>
+
+                        This deal was rejected by an administrator.
+
+                    </div>
+
+                    {% endif %}
+
+
+                    <!-- DELETE -->
+                    <form
+                        method="POST"
+                        action="{{ url_for(
+                            'company.delete_deal',
+                            deal_id=deal.id
+                        ) }}"
+                        style="margin-top: 15px;"
+                    >
+
+                        <button
+                            type="submit"
+                            class="btn-danger"
+                            onclick="return confirm(
+                                'Are you sure you want to delete this deal?'
+                            );"
+                        >
+                            Delete Deal
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+
+    {% else %}
+
+        <!-- NO DEALS -->
+        <div class="dashboard-card">
+
+            <h3>
+                No deals yet
+            </h3>
+
+            <p>
+                Your company has not submitted any special
+                offers yet.
+            </p>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+
+<!-- DEAL PRICE JAVASCRIPT -->
+<script>
+
+    const productSelect =
+        document.getElementById("product_id");
+
+    const originalPriceInput =
+        document.getElementById("original_price");
+
+    const salePriceInput =
+        document.getElementById("sale_price");
+
+    const discountPreview =
+        document.getElementById("discount-preview");
+
+    const discountPercentage =
+        document.getElementById("discount-percentage");
+
+    const salePriceHelp =
+        document.getElementById("sale-price-help");
+
+
+    /*
+     * When the company selects a product,
+     * automatically load that product's price.
+     */
+    productSelect.addEventListener(
+        "change",
+        function () {
+
+            const selectedOption =
+                productSelect.options[
+                    productSelect.selectedIndex
+                ];
+
+            const price =
+                selectedOption.getAttribute(
+                    "data-price"
+                );
+
+
+            if (price) {
+
+                const originalPrice =
+                    parseFloat(price);
+
+
+                // Automatically fill original price
+                originalPriceInput.value =
+                    originalPrice.toFixed(2);
+
+
+                // Clear previous sale price
+                salePriceInput.value = "";
+
+
+                // Sale price must be lower
+                salePriceInput.max =
+                    (
+                        originalPrice - 0.01
+                    ).toFixed(2);
+
+
+                // Update help text
+                salePriceHelp.textContent =
+                    "Maximum sale price: R" +
+                    (
+                        originalPrice - 0.01
+                    ).toFixed(2);
+
+
+                // Hide discount until sale price is entered
+                discountPreview.style.display =
+                    "none";
+
+            } else {
+
+                originalPriceInput.value = "";
+
+                salePriceInput.value = "";
+
+                salePriceInput.removeAttribute(
+                    "max"
+                );
+
+                salePriceHelp.textContent =
+                    "Sale price must be lower than the original price.";
+
+                discountPreview.style.display =
+                    "none";
+            }
+
+        }
+    );
+
+
+    /*
+     * Calculate discount automatically
+     * when the company enters the sale price.
+     */
+    salePriceInput.addEventListener(
+        "input",
+        function () {
+
+            const originalPrice =
+                parseFloat(
+                    originalPriceInput.value
+                );
+
+            const salePrice =
+                parseFloat(
+                    salePriceInput.value
+                );
+
+
+            if (
+                !isNaN(originalPrice) &&
+                !isNaN(salePrice) &&
+                originalPrice > 0 &&
+                salePrice >= 0
+            ) {
+
+                if (salePrice >= originalPrice) {
+
+                    salePriceHelp.textContent =
+                        "Sale price must be lower than R" +
+                        originalPrice.toFixed(2);
+
+                    discountPreview.style.display =
+                        "none";
+
+                    return;
+                }
+
+
+                const discount =
+                    (
+                        (
+                            originalPrice -
+                            salePrice
+                        )
+                        / originalPrice
+                    ) * 100;
+
+
+                discountPercentage.textContent =
+                    discount.toFixed(2) + "%";
+
+
+                discountPreview.style.display =
+                    "block";
+
+
+                salePriceHelp.textContent =
+                    "Discount applied successfully.";
+
+            } else {
+
+                discountPreview.style.display =
+                    "none";
+
+            }
+
+        }
+    );
+
+</script>
+
+{% endblock %}

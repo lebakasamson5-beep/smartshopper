@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+
+{% block title %}
+Admin Dashboard - SmartShop AI
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-container">
+
+    <!-- ==================================================
+         ADMIN HEADER
+    ================================================== -->
+
+    <div class="section-heading-row">
+
+        <div>
+
+            <p class="small-heading">
+                ADMINISTRATION
+            </p>
+
+            <h1>
+                SmartShop AI Control Centre
+            </h1>
+
+            <p>
+                Monitor and manage the SmartShop AI platform.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==================================================
+         PLATFORM STATISTICS
+    ================================================== -->
+
+    <div class="dashboard-cards">
+
+
+        <!-- TOTAL USERS -->
+
+        <div class="dashboard-card">
+
+            <div class="icon">
+                👥
+            </div>
+
+            <h2>
+                {{ total_users }}
+            </h2>
+
+            <p>
+                Total Users
+            </p>
+
+        </div>
+
+
+        <!-- STUDENTS -->
+
+        <div class="dashboard-card">
+
+            <div class="icon">
+                🎓
+            </div>
+
+            <h2>
+                {{ total_students }}
+            </h2>
+
+            <p>
+                Students / Customers
+            </p>
+
+        </div>
+
+
+        <!-- COMPANIES -->
+
+        <div class="dashboard-card">
+
+            <div class="icon">
+                🏪
+            </div>
+
+            <h2>
+                {{ total_companies }}
+            </h2>
+
+            <p>
+                Companies
+            </p>
+
+        </div>
+
+
+        <!-- PRODUCTS -->
+
+        <div class="dashboard-card">
+
+            <div class="icon">
+                📦
+            </div>
+
+            <h2>
+                {{ total_products }}
+            </h2>
+
+            <p>
+                Listed Products
+            </p>
+
+        </div>
+
+
+        <!-- DEALS -->
+
+        <div class="dashboard-card">
+
+            <div class="icon">
+                🏷️
+            </div>
+
+            <h2>
+                {{ total_deals }}
+            </h2>
+
+            <p>
+                Total Deals
+            </p>
+
+        </div>
+
+
+        <!-- PENDING DEALS -->
+
+        <div class="dashboard-card">
+
+            <div class="icon">
+                ⏳
+            </div>
+
+            <h2>
+                {{ pending_deals }}
+            </h2>
+
+            <p>
+                Deals Awaiting Approval
+            </p>
+
+        </div>
+
+
+        <!-- APPROVED DEALS -->
+
+        <div class="dashboard-card">
+
+            <div class="icon">
+                ✅
+            </div>
+
+            <h2>
+                {{ approved_deals }}
+            </h2>
+
+            <p>
+                Approved Deals
+            </p>
+
+        </div>
+
+
+        <!-- REJECTED DEALS -->
+
+        <div class="dashboard-card">
+
+            <div class="icon">
+                ❌
+            </div>
+
+            <h2>
+                {{ rejected_deals }}
+            </h2>
+
+            <p>
+                Rejected Deals
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==================================================
+         ADMIN MANAGEMENT
+    ================================================== -->
+
+    <div class="section-header">
+
+        <div>
+
+            <h2>
+                Platform Management
+            </h2>
+
+            <p>
+                Manage the different areas of SmartShop AI.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="dashboard-cards">
+
+
+        <!-- USERS -->
+
+        <div class="dashboard-card">
+
+            <div class="icon">
+                👥
+            </div>
+
+            <h3>
+                User Management
+            </h3>
+
+            <p>
+                View and manage students and platform users.
+            </p>
+
+            <a
+                href="#"
+                class="btn-primary"
+            >
+                Manage Users
+            </a>
+
+        </div>
+
+
+        <!-- COMPANIES -->
+
+        <div class="dashboard-card">
+
+            <div class="icon">
+                🏪
+            </div>
+
+            <h3>
+                Company Management
+            </h3>
+
+            <p>
+                View companies registered on SmartShop AI.
+            </p>
+
+            <a
+                href="#"
+                class="btn-primary"
+            >
+                Manage Companies
+            </a>
+
+        </div>
+
+
+        <!-- PRODUCTS -->
+
+        <div class="dashboard-card">
+
+            <div class="icon">
+                📦
+            </div>
+
+            <h3>
+                Product Management
+            </h3>
+
+            <p>
+                Monitor products and company listings.
+            </p>
+
+            <a
+                href="#"
+                class="btn-primary"
+            >
+                Manage Products
+            </a>
+
+        </div>
+
+
+        <!-- DEALS -->
+
+        <div class="dashboard-card">
+
+            <div class="icon">
+                🏷️
+            </div>
+
+            <h3>
+                Deal Management
+            </h3>
+
+            <p>
+                Review, approve and reject company deals.
+            </p>
+
+            <a
+                href="{{ url_for('admin.deals') }}"
+                class="btn-primary"
+            >
+                Manage Deals
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==================================================
+         DEAL APPROVAL NOTICE
+    ================================================== -->
+
+    {% if pending_deals > 0 %}
+
+    <div class="flash">
+
+        <strong>
+            ⚠️ Action Required
+        </strong>
+
+        <br>
+
+        There are
+        <strong>{{ pending_deals }}</strong>
+        deal(s) waiting for administrator approval.
+
+        <br><br>
+
+        <a
+            href="{{ url_for('admin.deals') }}"
+            class="btn-primary"
+        >
+            Review Pending Deals
+        </a>
+
+    </div>
+
+    {% else %}
+
+    <div class="flash success">
+
+        <strong>
+            ✓ All Clear
+        </strong>
+
+        <br>
+
+        There are currently no deals waiting for approval.
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

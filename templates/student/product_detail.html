@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - SmartShop AI{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+
+    <a href="{{ url_for('student.products', search=product.name.split(' ')[0]) }}"
+       class="back-link">← Back to products</a>
+
+    <div class="product-detail">
+
+        <!-- ==========================================
+             IMAGE
+             ========================================== -->
+        <div class="product-detail-image">
+            {% if product.image and product.image.startswith('http') %}
+                <img src="{{ product.image }}" alt="{{ product.name }}">
+            {% elif product.image %}
+                <img src="{{ url_for('static', filename='images/' + product.image) }}"
+                     alt="{{ product.name }}">
+            {% else %}
+                <div class="product-image-placeholder large">
+                    {{ product.category or 'Item' }}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- ==========================================
+             INFO
+             ========================================== -->
+        <div class="product-detail-info">
+
+            {% if product.on_sale %}
+                <div class="sale-badge large">
+                    🔥 {{ product.sale_label or 'SALE' }}
+                    {% if product.sale_discount %}· {{ product.sale_discount }}{% endif %}
+                    · ends in {{ product.sale_days_left }}
+                    day{% if product.sale_days_left != 1 %}s{% endif %}
+                </div>
+            {% endif %}
+
+            {% if product.in_combo %}
+                <div class="combo-badge large">
+                    🎁 In combo:
+                    {{ product.combo_titles | join(", ") }}
+                </div>
+            {% endif %}
+
+            <p class="small-heading">{{ product.category or "General" }}</p>
+            <h1>{{ product.name }}</h1>
+
+            <p class="product-detail-shop">
+                <strong>Shop:</strong> {{ product.shop_name }}
+            </p>
+
+            {% if product.description %}
+                <p class="product-detail-desc">{{ product.description }}</p>
+            {% endif %}
+
+            <div class="product-detail-price">
+                R {{ "%.2f"|format(product.price) }}
+                {% if product.on_sale and product.sale_original_price %}
+                    <s style="font-size: 18px; color: #999; margin-left: 10px;">
+                        R {{ "%.2f"|format(product.sale_original_price) }}
+                    </s>
+                {% endif %}
+            </div>
+
+            <!-- ==========================================
+                 ADD TO LIST
+                 ========================================== -->
+            <form method="POST"
+                  action="{{ url_for('student.add_to_list', barcode=product.id) }}"
+                  class="product-detail-form">
+
+                <label for="quantity">Quantity</label>
+                <input type="number" id="quantity" name="quantity"
+                       min="1" value="1" required>
+
+                <button type="submit" class="btn-primary">
+                    Add to Reservation List
+                </button>
+            </form>
+
+            <!-- ==========================================
+                 RESERVE (LOCAL DB PRODUCTS ONLY)
+                 ========================================== -->
+            {% if product.id is number %}
+                <a href="{{ url_for('student.reserve_product', product_id=product.id) }}"
+                   class="btn" style="margin-top:12px;display:inline-block;">
+                    Reserve for Pickup
+                </a>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- ==========================================
+         RELATED PRODUCTS
+         ========================================== -->
+    {% if related %}
+        <div class="section-heading-row" style="margin-top:40px;">
+            <div>
+                <p class="small-heading">YOU MIGHT ALSO LIKE</p>
+                <h2>Related Products</h2>
+            </div>
+        </div>
+
+        <div class="product-grid">
+            {% for item in related %}
+            <a class="product-card product-card-link"
+               href="{{ url_for('student.product_detail', barcode=item.id) }}">
+
+                <div class="product-image" style="position:relative;">
+                    {% if item.image and item.image.startswith('http') %}
+                        <img src="{{ item.image }}" alt="{{ item.name }}" loading="lazy">
+                    {% else %}
+                        <span class="product-image-placeholder">
+                            {{ item.category or 'Item' }}
+                        </span>
+                    {% endif %}
+
+                    {% if item.on_sale %}
+                        <span class="sale-badge">
+                            🔥 {{ item.sale_discount or 'SALE' }}
+                            · {{ item.sale_days_left }}d
+                        </span>
+                    {% endif %}
+
+                    {% if item.in_combo %}
+                        <span class="combo-badge small">🎁 COMBO</span>
+                    {% endif %}
+                </div>
+
+                <div class="product-content">
+                    <p class="product-category">{{ item.category or "General" }}</p>
+                    <h3 class="product-name">{{ item.name }}</h3>
+                    <p class="product-shop">
+                        <strong>Shop:</strong> {{ item.shop_name }}
+                    </p>
+                    <div class="product-bottom">
+                        <strong class="product-price">
+                            R {{ "%.2f"|format(item.price) }}
+                        </strong>
+                        {% if item.on_sale and item.sale_original_price %}
+                            <span class="product-was">
+                                <s>R {{ "%.2f"|format(item.sale_original_price) }}</s>
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Budget - Step 2{% endblock %}
+
+{% block extra_head %}
+<style>
+/* ============ WIZARD (shared by all 4 budget steps) ============ */
+.wizard{max-width:820px;margin:0 auto}
+
+.wizard-progress{display:flex;align-items:center;justify-content:center;margin:8px 0 28px}
+.wizard-step{
+    width:44px;height:44px;border-radius:50%;display:grid;place-items:center;
+    background:#fff;border:3px solid var(--line);color:var(--muted);
+    font:800 1.05rem 'Bricolage Grotesque',sans-serif;
+}
+.wizard-step.done{background:var(--mint);border-color:var(--mint);color:var(--ink)}
+.wizard-step.active{
+    background:var(--grad);border-color:transparent;color:#fff;
+    transform:scale(1.15);box-shadow:0 0 0 6px rgba(91,46,255,.18);
+}
+.wizard-bar{flex:0 1 72px;height:6px;border-radius:99px;background:var(--line)}
+.wizard-bar.done{background:var(--mint)}
+
+.wizard-card{
+    background:#fff;border:2px solid var(--line);border-radius:30px;
+    padding:36px;box-shadow:var(--shadow);text-align:center;
+}
+.wizard-card h1{font-size:clamp(1.6rem,4vw,2.3rem)}
+.wizard-card h3{font-weight:500;color:var(--muted);font-family:'DM Sans',sans-serif;margin-top:8px}
+
+.small-heading{
+    display:inline-block;margin:18px 0 26px;padding:8px 20px;border-radius:999px;
+    background:#FFF0BF;color:#6B4B00;
+}
+.small-heading strong{font:800 1.15rem 'Bricolage Grotesque',sans-serif}
+
+/* ============ CATEGORY TILES ============ */
+.category-grid{
+    display:grid;gap:14px;text-align:center;
+    grid-template-columns:repeat(auto-fill,minmax(130px,1fr));
+}
+.category-tile{
+    position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;
+    margin:0;padding:20px 10px;cursor:pointer;border-radius:22px;
+    background:var(--bg);border:3px solid transparent;
+    transition:transform .15s,border-color .2s,background .2s;
+}
+.category-tile:hover{transform:translateY(-4px);border-color:var(--line)}
+.category-tile input{position:absolute;opacity:0;pointer-events:none}
+.category-tile:focus-within{outline:3px solid var(--sun);outline-offset:2px}
+.category-icon{
+    width:58px;height:58px;border-radius:18px;background:#fff;font-size:1.9rem;
+    display:grid;place-items:center;box-shadow:0 6px 14px rgba(27,19,64,.08);
+    transition:transform .2s;
+}
+.category-label{font-weight:700;font-size:.95rem}
+/* tick badge appears when chosen */
+.category-tile::after{
+    content:"✓";position:absolute;top:8px;right:8px;width:24px;height:24px;
+    border-radius:50%;background:var(--grape);color:#fff;font-size:.8rem;font-weight:800;
+    display:grid;place-items:center;transform:scale(0);transition:transform .2s;
+}
+.category-tile.selected{background:#E9E2FF;border-color:var(--grape)}
+.category-tile.selected .category-icon{transform:rotate(-8deg) scale(1.08)}
+.category-tile.selected::after{transform:scale(1)}
+
+/* ============ ACTIONS ============ */
+.selected-count{margin-top:22px;color:var(--muted);font-weight:500;min-height:1.6em}
+.wizard-actions{display:flex;justify-content:space-between;gap:12px;margin-top:20px}
+.wizard-actions .btn{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.wizard-actions .btn:hover{background:var(--bg);transform:none}
+.btn-primary{
+    padding:13px 32px;border:0;border-radius:999px;cursor:pointer;color:#fff;
+    background:var(--grad);font:700 1rem 'DM Sans',sans-serif;
+    box-shadow:0 8px 18px rgba(255,93,115,.35);transition:transform .15s,opacity .2s;
+}
+.btn-primary:hover{transform:translateY(-2px)}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.wizard-footer{text-align:center;margin-top:18px;color:var(--muted);font-size:.9rem}
+
+@media(max-width:520px){
+    .wizard-card{padding:24px 16px}
+    .wizard-bar{flex-basis:28px}
+    .category-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container wizard">
+
+    <div class="wizard-progress" aria-label="Step 2 of 4">
+        <span class="wizard-step done">✓</span>
+        <span class="wizard-bar done"></span>
+        <span class="wizard-step active">2</span>
+        <span class="wizard-bar"></span>
+        <span class="wizard-step">3</span>
+        <span class="wizard-bar"></span>
+        <span class="wizard-step">4</span>
+    </div>
+
+    <div class="wizard-card">
+        <h1>📋 What are you budgeting for?</h1>
+        <h3>Select every category you want to plan spending for.</h3>
+
+        <p class="small-heading">
+            Budget: <strong>R {{ "%.2f"|format(budget.monthly_limit) }}</strong>
+        </p>
+
+        <form method="POST" action="{{ url_for('student.budget_step2') }}">
+
+            <div class="category-grid">
+                {% for c in categories %}
+                <label class="category-tile {% if c.key in chosen %}selected{% endif %}">
+                    <input
+                        type="checkbox"
+                        name="categories"
+                        value="{{ c.key }}"
+                        {% if c.key in chosen %}checked{% endif %}
+                        onchange="this.closest('.category-tile').classList.toggle('selected', this.checked); updateCount()"
+                    >
+                    <span class="category-icon">{{ c.icon }}</span>
+                    <span class="category-label">{{ c.label }}</span>
+                </label>
+                {% endfor %}
+            </div>
+
+            <p class="selected-count" id="selectedCount" aria-live="polite"></p>
+
+            <div class="wizard-actions">
+                <a href="{{ url_for('student.budget_step1') }}" class="btn">◀ Back</a>
+                <button type="submit" class="btn-primary" id="nextBtn">Next ▶</button>
+            </div>
+        </form>
+    </div>
+
+    <p class="wizard-footer">Step 2 of 4</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Shows how many categories are chosen and blocks "Next" when none are
+    function updateCount() {
+        const n = document.querySelectorAll('input[name="categories"]:checked').length;
+        document.getElementById('selectedCount').textContent =
+            n === 0 ? 'Pick at least one category to continue.'
+                    : n + (n === 1 ? ' category selected' : ' categories selected');
+        document.getElementById('nextBtn').disabled = (n === 0);
+    }
+    updateCount();
+</script>
+{% endblock %}

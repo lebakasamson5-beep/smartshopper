@@ -1,0 +1,23 @@
+# Python virtual environment
+venv/
+Scripts/
+Include/
+Lib/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment variables / secrets
+.env
+
+# Instance/local data
+instance/
+
+# Runtime files
+var/
+
+# IDE files
+.vscode/
+.idea/
+pyvenv.cfg

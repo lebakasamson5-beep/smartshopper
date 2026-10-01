@@ -1,0 +1,181 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Student Dashboard - SmartShop AI{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-container">
+
+    <!-- ==========================================
+         WELCOME
+         ========================================== -->
+    <section class="welcome-section">
+        <div>
+            <p class="small-heading">STUDENT DASHBOARD</p>
+            <h1>Welcome, {{ current_user.name }}!</h1>
+            <p>
+                Find affordable products, manage your budget and make smarter
+                shopping decisions.
+            </p>
+        </div>
+    </section>
+
+    <!-- ==========================================
+     STORES NEAR YOU
+     ========================================== -->
+<section class="shop-map-link-section" style="margin-top: 25px;">
+    <div class="shop-map-link-card">
+        <div>
+            <p class="small-heading">LOCAL SHOPS</p>
+            <h2>📍 Find Shops Near You</h2>
+            <p>View nearby stores on a map.</p>
+        </div>
+        <a href="{{ url_for('student.stores') }}" class="btn-primary">
+            Open Map
+        </a>
+    </div>
+</section>
+
+
+    <!-- ==========================================
+         QUICK ACTIONS
+         ========================================== -->
+    <section style="margin-top: 40px;">
+        <h2 class="section-title">Quick Actions</h2>
+
+        <div class="dashboard-cards">
+
+            <a href="{{ url_for('student.budget') }}" class="dashboard-card">
+                <div class="card-icon">💰</div>
+                <h3>Budget Planner</h3>
+                <p>Plan your monthly shopping expenses.</p>
+            </a>
+
+            <a href="{{ url_for('student.loyalty_wallet') }}" class="dashboard-card">
+                <div class="card-icon">💳</div>
+                <h3>Smart Shopper Card</h3>
+                <p>Select your Smart Shopper cards.</p>
+            </a>
+
+        </div>
+    </section>
+
+
+    <!-- ==========================================
+         SPECIAL DEALS
+         ========================================== -->
+    <section class="deals-section" style="margin-top: 40px;">
+
+        <div class="section-heading-row">
+            <h2 class="section-title">🔥 Special Deals</h2>
+            <span class="small-heading">Featured this week</span>
+        </div>
+
+        {% if featured_deals %}
+        <div class="deals-grid">
+            {% for deal in featured_deals %}
+            <a href="{{ url_for('student.product_detail', barcode=deal.id) }}"
+               class="deal-card-link">
+
+                <div class="deal-card featured-deal-card">
+
+                    <div class="deal-image">
+                        {% if deal.image %}
+                            <img src="{{ deal.image }}" alt="{{ deal.name }}">
+                        {% endif %}
+                        <span class="sale-badge">
+                            🔥 {{ deal.sale_discount or 'SALE' }}
+                        </span>
+                    </div>
+
+                    <div class="deal-body">
+                        <p class="small-heading">{{ deal.sale_label }}</p>
+                        <h3>{{ deal.name }}</h3>
+                        <p class="combo-shops">🏪 {{ deal.shop_name }}</p>
+
+                        <div class="deal-prices">
+                            <strong>R {{ "%.2f"|format(deal.price) }}</strong>
+                            {% if deal.sale_original_price %}
+                                <s>R {{ "%.2f"|format(deal.sale_original_price) }}</s>
+                            {% endif %}
+                        </div>
+
+                        <p class="deal-countdown">
+                            ⏱ {{ deal.sale_days_left }}
+                            day{% if deal.sale_days_left != 1 %}s{% endif %} left
+                        </p>
+                    </div>
+
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="dashboard-card">
+            <p>No featured deals right now.</p>
+        </div>
+        {% endif %}
+
+    </section>
+
+
+    <!-- ==========================================
+         COMBO BUNDLES
+         ========================================== -->
+    <section style="margin-top: 40px;">
+
+        <div class="section-heading-row">
+            <h2 class="section-title">🎁 Combo Bundles</h2>
+            <span class="small-heading">Buy more, save more</span>
+        </div>
+
+        {% if combos %}
+        <div class="combo-grid">
+            {% for c in combos %}
+            <a href="{{ url_for('student.combo_detail', combo_id=c.id) }}"
+               class="combo-card-link">
+
+                <div class="combo-card">
+
+                    <div class="combo-image">
+                        {% if c.image_url %}
+                            <img src="{{ c.image_url }}" alt="{{ c.title }}">
+                        {% else %}
+                            <span class="product-image-placeholder">Combo</span>
+                        {% endif %}
+                        <span class="combo-badge">
+                            {{ c.discount_label or 'SAVE' }}
+                        </span>
+                    </div>
+
+                    <div class="combo-body">
+                        <h3>{{ c.title }}</h3>
+                        <p class="small-heading">{{ c.barcodes | length }} items</p>
+                        <p class="combo-shops">🏪 {{ c.shop_names_display }}</p>
+
+                        <div class="combo-prices">
+                            <strong>R {{ "%.2f"|format(c.combo_price) }}</strong>
+                            <s>R {{ "%.2f"|format(c.original_price) }}</s>
+                        </div>
+
+                        <p class="deal-countdown">
+                            ⏱ {{ c.days_left }}
+                            day{% if c.days_left != 1 %}s{% endif %} left
+                        </p>
+                    </div>
+
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="dashboard-card">
+            <p>No combos available right now.</p>
+        </div>
+        {% endif %}
+
+    </section>
+
+</div>
+
+{% endblock %}

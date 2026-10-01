@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ combo.title }} - SmartShop AI</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+    /* ============ DESIGN TOKENS ============ */
+    :root{
+        --grape:#5B2EFF;  --grape-dark:#3E1BC9;
+        --coral:#FF5D73;  --mint:#19D3A2;
+        --sun:#FFC83D;    --sky:#38B6FF;
+        --ink:#1B1340;    --muted:#6B6590;
+        --bg:#F6F3FF;    --card:#FFFFFF;
+        --line:#E4DEFA;
+        --radius:20px;
+        --shadow:0 10px 30px rgba(91,46,255,.12);
+        --grad:linear-gradient(135deg,var(--grape),var(--coral));
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{
+        font-family:'DM Sans',system-ui,sans-serif;
+        color:var(--ink);background:var(--bg);
+        line-height:1.6;min-height:100vh;
+        display:flex;flex-direction:column;
+        background-image:
+            radial-gradient(circle at 8% 12%,rgba(255,93,115,.14),transparent 28%),
+            radial-gradient(circle at 92% 30%,rgba(25,211,162,.14),transparent 30%),
+            radial-gradient(circle at 50% 95%,rgba(255,200,61,.16),transparent 30%);
+        background-attachment:fixed;
+    }
+    h1,h2,h3,.logo{font-family:'Bricolage Grotesque',sans-serif;line-height:1.15}
+    h1{font-size:clamp(2rem,5vw,3.4rem);font-weight:800}
+    h2{font-size:clamp(1.5rem,3vw,2.1rem);font-weight:800}
+    h3{font-size:1.2rem;font-weight:600}
+    a{color:var(--grape);text-decoration:none}
+    img{max-width:100%;display:block}
+    :focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+
+    /* ============ NAVBAR ============ */
+    .navbar{
+        position:sticky;top:0;z-index:50;
+        display:flex;align-items:center;justify-content:space-between;
+        gap:16px;padding:12px 5%;
+        background:rgba(255,255,255,.85);
+        backdrop-filter:blur(14px);
+        border-bottom:2px solid var(--line);
+    }
+    .logo{display:flex;align-items:center;gap:10px;font-size:1.4rem;font-weight:800;color:var(--ink)}
+    .logo-mark{
+        width:38px;height:38px;border-radius:12px;
+        background:var(--grad);display:grid;place-items:center;
+        transform:rotate(-8deg);box-shadow:0 6px 14px rgba(255,93,115,.35);
+    }
+    .logo b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .navbar nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .navbar nav a{
+        padding:8px 14px;border-radius:999px;
+        color:var(--ink);font-weight:500;font-size:.95rem;
+        transition:background .2s,color .2s;
+    }
+    .navbar nav a:hover{background:var(--bg);color:var(--grape)}
+    .navbar nav a.active{background:var(--ink);color:#fff}
+    .navbar nav a.logout{border:2px solid var(--line)}
+    .navbar nav a.logout:hover{border-color:var(--coral);color:var(--coral);background:#fff}
+    .menu-btn{
+        display:none;background:var(--ink);color:#fff;border:0;
+        width:42px;height:42px;border-radius:12px;font-size:1.3rem;cursor:pointer;
+    }
+    .role-badge{
+        font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:999px;
+        background:var(--sun);color:var(--ink);margin-left:4px;text-transform:capitalize;
+    }
+
+    /* ============ LAYOUT ============ */
+    main{flex:1;width:100%;max-width:1200px;margin:0 auto;padding:32px 5% 56px}
+
+    /* ============ FLASH ============ */
+    .flash{
+        display:flex;justify-content:space-between;align-items:center;gap:12px;
+        padding:14px 18px;border-radius:14px;margin-bottom:16px;
+        font-weight:500;border-left:6px solid var(--grape);
+        background:#fff;box-shadow:var(--shadow);
+    }
+    .flash.success{border-color:var(--mint);background:#E9FBF5}
+    .flash.danger,.flash.error{border-color:var(--coral);background:#FFEDEF}
+    .flash.warning{border-color:var(--sun);background:#FFF7DD}
+    .flash.info{border-color:var(--sky);background:#E8F6FF}
+    .flash button{background:none;border:0;font-size:1.2rem;cursor:pointer;color:var(--muted)}
+
+    /* ============ SHARED ============ */
+    .dashboard-card{
+        background:var(--card);border-radius:var(--radius);
+        padding:24px;box-shadow:var(--shadow);border:2px solid var(--line);
+    }
+    .btn-primary{
+        display:inline-block;padding:10px 18px;border-radius:999px;border:0;
+        background:var(--grape);color:#fff;font:700 .95rem 'DM Sans',sans-serif;
+        cursor:pointer;transition:transform .15s,background .2s;
+    }
+    .btn-primary:hover{background:var(--grape-dark);transform:translateY(-2px)}
+    .back-link{
+        display:inline-block;margin-bottom:18px;padding:8px 16px;border-radius:999px;
+        background:#fff;border:2px solid var(--line);color:var(--ink);font-weight:500;font-size:.92rem;
+        transition:all .2s;
+    }
+    .back-link:hover{border-color:var(--grape);color:var(--grape)}
+
+    /* ============ PAGE: COMBO ============ */
+    /* Hero */
+    .combo-hero{
+        position:relative;overflow:hidden;isolation:isolate;
+        background:var(--grad);color:#fff;border-radius:28px;
+        padding:clamp(28px,5vw,52px);
+        display:grid;gap:28px;grid-template-columns:1.3fr 1fr;align-items:center;
+        box-shadow:0 18px 44px rgba(91,46,255,.28);
+    }
+    .combo-hero::before,.combo-hero::after{
+        content:"";position:absolute;border-radius:50%;z-index:-1;
+    }
+    .combo-hero::before{width:320px;height:320px;right:-80px;top:-120px;background:rgba(255,200,61,.35)}
+    .combo-hero::after{width:240px;height:240px;left:-70px;bottom:-110px;background:rgba(25,211,162,.35)}
+    .combo-tag{
+        display:inline-block;margin-bottom:12px;padding:5px 14px;border-radius:999px;
+        background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.4);
+        font-weight:700;font-size:.8rem;letter-spacing:.05em;
+    }
+    .combo-hero h1{margin-bottom:12px}
+    .combo-hero p{font-size:1.08rem;max-width:46ch;opacity:.95}
+    .countdown{
+        display:inline-flex;align-items:center;gap:8px;margin-top:20px;
+        padding:10px 18px;border-radius:999px;background:var(--ink);color:#fff;font-weight:700;
+    }
+    .countdown .dot{width:10px;height:10px;border-radius:50%;background:var(--mint);animation:pulse 1.6s ease-out infinite}
+    .countdown.urgent .dot{background:var(--sun)}
+
+    /* Price panel */
+    .price-panel{
+        position:relative;background:#fff;color:var(--ink);border-radius:24px;
+        padding:28px 24px 24px;text-align:center;box-shadow:0 12px 30px rgba(27,19,64,.22);
+    }
+    .price-panel .was{color:var(--muted);font-weight:500}
+    .price-panel .was s{text-decoration-color:var(--coral);text-decoration-thickness:3px}
+    .price-panel .now-label{margin-top:10px;font-weight:700;color:var(--muted);font-size:.9rem}
+    .price-panel .now{
+        font:800 clamp(2.4rem,6vw,3.4rem) 'Bricolage Grotesque',sans-serif;line-height:1.1;
+        background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;
+    }
+    .save-pill{
+        display:inline-block;margin-top:14px;padding:8px 18px;border-radius:999px;
+        background:#D8F8EE;color:#0B7A5C;font-weight:700;
+    }
+    .save-burst{
+        position:absolute;top:-22px;right:-14px;width:84px;height:84px;border-radius:50%;
+        background:var(--sun);color:var(--ink);display:grid;place-items:center;text-align:center;
+        font:800 1.25rem/1 'Bricolage Grotesque',sans-serif;transform:rotate(12deg);
+        box-shadow:0 8px 18px rgba(255,200,61,.55);border:4px solid #fff;
+        animation:wiggle 3.2s ease-in-out infinite;
+    }
+    .save-burst small{display:block;font:700 .65rem 'DM Sans',sans-serif}
+
+    /* Items */
+    .section-title{margin:44px 0 6px}
+    .section-sub{color:var(--muted);margin-bottom:20px}
+    .product-grid{display:grid;gap:20px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+    .product-card{
+        position:relative;background:var(--card);border-radius:var(--radius);border:2px solid var(--line);
+        box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;
+        transition:transform .2s,border-color .2s;
+    }
+    .product-card:hover{transform:translateY(-4px) rotate(-.4deg);border-color:var(--mint)}
+    .included{
+        position:absolute;top:26px;left:26px;z-index:1;padding:4px 12px;border-radius:999px;
+        background:var(--mint);color:var(--ink);font-size:.75rem;font-weight:700;
+    }
+    .product-image{
+        width:100%;aspect-ratio:4/3;border-radius:14px;overflow:hidden;
+        background:var(--grad);margin-bottom:12px;
+    }
+    .product-image img{width:100%;height:100%;object-fit:cover}
+    .product-content{display:flex;flex-direction:column;flex:1}
+    .product-category{
+        align-self:flex-start;margin-bottom:6px;padding:2px 10px;border-radius:999px;
+        background:#E9E2FF;color:var(--grape-dark);font-size:.75rem;font-weight:700;
+    }
+    .product-name{margin-bottom:4px}
+    .product-shop{color:var(--muted);font-size:.9rem;margin-bottom:10px}
+    .product-bottom{margin-top:auto}
+    .product-price{font:800 1.3rem 'Bricolage Grotesque',sans-serif;color:var(--grape)}
+    .product-content form .btn-primary{width:100%}
+
+    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(25,211,162,.7)}100%{box-shadow:0 0 0 12px rgba(25,211,162,0)}}
+    @keyframes wiggle{0%,100%{transform:rotate(12deg)}50%{transform:rotate(5deg) scale(1.06)}}
+
+    /* ============ FOOTER ============ */
+    footer{background:var(--ink);color:#CFC8F5;margin-top:auto;padding:36px 5% 24px;position:relative}
+    footer::before{
+        content:"";position:absolute;inset:0 0 auto 0;height:6px;
+        background:linear-gradient(90deg,var(--coral),var(--sun),var(--mint),var(--sky),var(--grape));
+    }
+    .footer-inner{max-width:1200px;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:space-between;gap:24px}
+    .footer-inner h3{color:#fff;margin-bottom:8px}
+    .footer-inner a{color:#CFC8F5;display:block;padding:2px 0}
+    .footer-inner a:hover{color:var(--sun)}
+    .copyright{max-width:1200px;margin:24px auto 0;padding-top:16px;border-top:1px solid rgba(255,255,255,.12);font-size:.85rem;text-align:center}
+
+    /* ============ RESPONSIVE ============ */
+    @media(max-width:860px){
+        .menu-btn{display:block}
+        .navbar nav{
+            display:none;position:absolute;top:100%;left:0;right:0;
+            flex-direction:column;align-items:stretch;padding:14px 5%;
+            background:#fff;border-bottom:2px solid var(--line);
+        }
+        .navbar nav.open{display:flex}
+        .navbar nav a{text-align:center}
+        .combo-hero{grid-template-columns:1fr}
+        .save-burst{right:8px}
+    }
+    @media(prefers-reduced-motion:reduce){
+        *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+    }
+    </style>
+</head>
+
+<body>
+
+<!-- ============ NAVBAR ============ -->
+<header class="navbar">
+    <a class="logo" href="{{ url_for('home') }}">
+        <span class="logo-mark">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 7h12l1 13H5L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/>
+            </svg>
+        </span>
+        Smart<b>Shop</b> AI
+    </a>
+
+    <button class="menu-btn" id="menuBtn" aria-label="Toggle menu" aria-expanded="false">☰</button>
+
+    <nav id="mainNav">
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('student.dashboard') }}" class="active">Dashboard</a>
+        <a href="{{ url_for('student.budget') }}">Budget</a>
+        <a href="{{ url_for('student.reservations') }}">Shopping List</a>
+        <a href="{{ url_for('student.ai_assistant') }}">✨ AI Assistant</a>
+        <a href="{{ url_for('student.profile') }}">Profile</a>
+        <span class="role-badge">{{ current_user.role }}</span>
+        <a href="{{ url_for('auth.logout') }}" class="logout">Logout</a>
+    </nav>
+</header>
+
+
+<main>
+
+    <!-- ============ FLASH MESSAGES ============ -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="flash {{ category }}">
+                <span>{{ message }}</span>
+                <button type="button" aria-label="Dismiss" onclick="this.parentElement.remove()">×</button>
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+    <a href="{{ url_for('student.dashboard') }}" class="back-link">← Back to dashboard</a>
+
+    <!-- ============ COMBO HERO ============ -->
+    <section class="combo-hero">
+
+        <div>
+            <span class="combo-tag">🎁 COMBO BUNDLE</span>
+            <h1>{{ combo.title }}</h1>
+            <p>{{ combo.description }}</p>
+
+            <div class="countdown {% if combo.days_left <= 2 %}urgent{% endif %}">
+                <span class="dot"></span>
+                Ends in {{ combo.days_left }} day{% if combo.days_left != 1 %}s{% endif %}
+            </div>
+        </div>
+
+        <div class="price-panel">
+            {% if combo.original_price and combo.original_price > 0 %}
+                <div class="save-burst">
+                    <div>{{ ((combo.savings / combo.original_price) * 100)|round|int }}%<small>OFF</small></div>
+                </div>
+            {% endif %}
+
+            <p class="was">Buy separately <s>R {{ "%.2f"|format(combo.original_price) }}</s></p>
+            <p class="now-label">Combo price</p>
+            <p class="now">R {{ "%.2f"|format(combo.combo_price) }}</p>
+            <span class="save-pill">You save R {{ "%.2f"|format(combo.savings) }}</span>
+        </div>
+
+    </section>
+
+    <!-- ============ ITEMS ============ -->
+    <h2 class="section-title">What's in the bundle</h2>
+    <p class="section-sub">Add each item to your shopping list to lock in the combo.</p>
+
+    {% if products %}
+    <div class="product-grid">
+        {% for p in products %}
+        <div class="product-card">
+            <span class="included">✓ In combo</span>
+            <div class="product-image">
+                {% if p.image %}
+                    <img src="{{ p.image }}" alt="{{ p.name }}" loading="lazy">
+                {% endif %}
+            </div>
+            <div class="product-content">
+                <p class="product-category">{{ p.category or "General" }}</p>
+                <h3 class="product-name">{{ p.name }}</h3>
+                <p class="product-shop"><strong>Shop:</strong> {{ p.shop_name }}</p>
+                <div class="product-bottom">
+                    <strong class="product-price">R {{ "%.2f"|format(p.price) }}</strong>
+                </div>
+
+                <form method="POST"
+                      action="{{ url_for('student.add_to_list', barcode=p.id) }}"
+                      style="margin-top:12px;">
+                    <input type="hidden" name="quantity" value="1">
+                    <button type="submit" class="btn-primary">🛒 Add to list</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="dashboard-card">
+        <p>No items could be loaded for this combo.</p>
+    </div>
+    {% endif %}
+
+</main>
+
+
+<!-- ============ FOOTER ============ -->
+<footer>
+    <div class="footer-inner">
+        <div>
+            <h3>SmartShop AI</h3>
+            <p>Smart deals and budgets for students.</p>
+        </div>
+        <div>
+            <h3>Explore</h3>
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('student.budget') }}">Budget</a>
+            <a href="{{ url_for('student.reservations') }}">Shopping List</a>
+        </div>
+    </div>
+    <p class="copyright">© SmartShop AI</p>
+</footer>
+
+<script>
+    const menuBtn = document.getElementById('menuBtn');
+    const mainNav = document.getElementById('mainNav');
+    menuBtn.addEventListener('click', () => {
+        const open = mainNav.classList.toggle('open');
+        menuBtn.setAttribute('aria-expanded', open);
+    });
+    setTimeout(() => document.querySelectorAll('.flash').forEach(f => f.remove()), 6000);
+</script>
+
+</body>
+</html>

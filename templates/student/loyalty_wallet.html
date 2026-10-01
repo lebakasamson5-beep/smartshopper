@@ -1,0 +1,337 @@
+{% extends "base.html" %}
+
+{% block title %}Loyalty Wallet - SmartShop AI{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+
+    <!-- ==========================================
+         HEADER
+         ========================================== -->
+    <div class="section-heading-row">
+        <div>
+            <p class="small-heading">MY WALLET</p>
+            <h1>💳 Loyalty Cards</h1>
+            <p>Keep all your loyalty cards in one place — scan at checkout.</p>
+        </div>
+        <button class="btn-primary" id="addBtn">+ Add Card</button>
+    </div>
+
+
+    <!-- ==========================================
+         CARD LIST
+         ========================================== -->
+    <div id="list" class="wallet-stack"></div>
+    <p class="empty-wallet" id="emptyMsg" style="display:none;">
+        No cards yet. Click <strong>Add Card</strong> to save your first one.
+    </p>
+
+</div>
+
+
+<!-- ==========================================
+     ADD CARD DIALOG
+     ========================================== -->
+<dialog id="addDlg" class="wallet-dialog">
+    <h2 style="margin:0 0 4px;">Add a loyalty card</h2>
+    <p class="small-heading">Your cards are saved on this account.</p>
+
+    <label for="preset">Shop</label>
+    <select id="preset"></select>
+
+    <div id="customBox" hidden>
+        <label for="shopName">Shop name</label>
+        <input id="shopName" maxlength="60" placeholder="e.g. My Local Store">
+
+        <label for="color">Card colour</label>
+        <input id="color" type="color" value="#444444" style="height:42px;padding:0;">
+    </div>
+
+    <label for="number">Card number</label>
+    <input id="number" inputmode="numeric" autocomplete="off"
+           placeholder="Number under the barcode">
+
+    <label for="format">Barcode type</label>
+    <select id="format"></select>
+
+    <p class="hint">
+        Not sure? Leave it on CODE128. EAN13 needs 12–13 digits.
+    </p>
+
+    <div class="err" id="err"></div>
+
+    <div class="wallet-row">
+        <button class="btn" id="cancelAdd">Cancel</button>
+        <button class="btn-primary" id="saveBtn">Save Card</button>
+    </div>
+</dialog>
+
+
+<!-- ==========================================
+     SCAN DIALOG
+     ========================================== -->
+<dialog id="scanDlg" class="wallet-dialog">
+    <h2 id="sTitle" style="margin:0 0 8px;"></h2>
+
+    <div class="wallet-paper">
+        <svg id="sCode"></svg>
+    </div>
+
+    <p class="hint">
+        Turn your screen brightness up and hold it flat under the scanner.
+    </p>
+
+    <div class="wallet-row">
+        <button class="btn btn-danger" id="delBtn">Delete</button>
+        <button class="btn-primary" id="closeScan">Close</button>
+    </div>
+</dialog>
+
+
+<!-- ==========================================
+     SERVER DATA (safe, JSON-encoded)
+     ========================================== -->
+<script id="wallet-data" type="application/json">
+{
+    "presets": {{ presets | tojson }},
+    "formats": {{ formats | tojson }},
+    "cards":   {{ cards   | tojson }}
+}
+</script>
+
+
+<!-- ==========================================
+     JsBarcode LIBRARY
+     ========================================== -->
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+
+
+<!-- ==========================================
+     WALLET APP SCRIPT
+     ========================================== -->
+<script>
+(function () {
+
+    // --------------------------------------------------
+    // LOAD SERVER DATA
+    // --------------------------------------------------
+    const DATA = JSON.parse(
+        document.getElementById('wallet-data').textContent
+    );
+
+    const PRESETS = DATA.presets;
+    const FORMATS = DATA.formats;
+
+    let cards = DATA.cards;
+    let current = null;
+
+    const $ = id => document.getElementById(id);
+
+    const ADD_URL = "{{ url_for('student.loyalty_wallet_add') }}";
+    const BASE_URL = "{{ url_for('student.loyalty_wallet') }}";
+
+
+    // --------------------------------------------------
+    // POPULATE DROPDOWNS
+    // --------------------------------------------------
+    PRESETS.forEach((p, i) => {
+        $('preset').add(new Option(p.shop, i));
+    });
+
+    $('preset').add(new Option("Other shop…", "custom"));
+
+    FORMATS.forEach(f => {
+        $('format').add(new Option(f, f));
+    });
+
+
+    // --------------------------------------------------
+    // RENDER CARD STACK
+    // --------------------------------------------------
+    function render() {
+
+        const list = $('list');
+        const empty = $('emptyMsg');
+
+        list.innerHTML = '';
+
+        if (!cards.length) {
+            empty.style.display = 'block';
+            return;
+        }
+
+        empty.style.display = 'none';
+
+        cards.forEach(c => {
+
+            const btn = document.createElement('button');
+            btn.className = 'wallet-card';
+            btn.style.background = c.bg;
+            btn.style.color = c.fg;
+
+            const shopEl = document.createElement('b');
+            shopEl.textContent = c.shop;
+
+            const numEl = document.createElement('span');
+            numEl.textContent = c.number;
+
+            btn.appendChild(shopEl);
+            btn.appendChild(numEl);
+
+            btn.onclick = () => openScan(c);
+
+            list.appendChild(btn);
+        });
+    }
+
+
+    // --------------------------------------------------
+    // OPEN SCAN DIALOG
+    // --------------------------------------------------
+    function openScan(c) {
+
+        current = c;
+        $('sTitle').textContent = c.shop;
+
+        try {
+            JsBarcode('#sCode', c.number, {
+                format: c.format,
+                width: 3,
+                height: 110,
+                displayValue: true,
+                fontSize: 18,
+                margin: 8,
+            });
+        } catch (e) {
+            alert(
+                'This number is not valid for ' + c.format +
+                '. Delete the card and re-add it as CODE128.'
+            );
+            return;
+        }
+
+        $('scanDlg').showModal();
+    }
+
+
+    // --------------------------------------------------
+    // DIALOG EVENTS
+    // --------------------------------------------------
+    $('preset').onchange = () => {
+        $('customBox').hidden = $('preset').value !== 'custom';
+    };
+
+    $('addBtn').onclick = () => {
+        $('err').textContent = '';
+        $('addDlg').showModal();
+    };
+
+    $('cancelAdd').onclick = () => $('addDlg').close();
+    $('closeScan').onclick = () => $('scanDlg').close();
+
+
+    // --------------------------------------------------
+    // SAVE CARD
+    // --------------------------------------------------
+    $('saveBtn').onclick = async () => {
+
+        const v = $('preset').value;
+        const number = $('number').value.replace(/\s+/g, '');
+        const format = $('format').value;
+
+        const p = v === 'custom'
+            ? {
+                shop: $('shopName').value.trim(),
+                bg: $('color').value,
+                fg: '#ffffff',
+            }
+            : PRESETS[+v];
+
+        if (!p.shop || !number) {
+            $('err').textContent = 'Enter the shop name and card number.';
+            return;
+        }
+
+        // Validate barcode before saving
+        try {
+            JsBarcode(
+                document.createElementNS('http://www.w3.org/2000/svg', 'svg'),
+                number,
+                { format }
+            );
+        } catch {
+            $('err').textContent =
+                'That number does not fit ' + format + '. Try CODE128.';
+            return;
+        }
+
+        // POST to server
+        try {
+            const response = await fetch(ADD_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    shop: p.shop,
+                    bg: p.bg,
+                    fg: p.fg,
+                    number: number,
+                    format: format,
+                }),
+            });
+
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                $('err').textContent = err.error || 'Could not save card.';
+                return;
+            }
+
+            const card = await response.json();
+            cards.push(card);
+
+            $('number').value = '';
+            $('addDlg').close();
+            render();
+
+        } catch (e) {
+            $('err').textContent = 'Network error. Try again.';
+        }
+    };
+
+
+    // --------------------------------------------------
+    // DELETE CARD
+    // --------------------------------------------------
+    $('delBtn').onclick = async () => {
+
+        if (!current) return;
+        if (!confirm('Delete ' + current.shop + '?')) return;
+
+        try {
+            const response = await fetch(
+                BASE_URL + '/delete/' + current.id,
+                { method: 'POST' }
+            );
+
+            if (!response.ok) {
+                alert('Could not delete card.');
+                return;
+            }
+
+            cards = cards.filter(c => c.id !== current.id);
+            $('scanDlg').close();
+            render();
+
+        } catch (e) {
+            alert('Network error. Try again.');
+        }
+    };
+
+
+    // --------------------------------------------------
+    // INITIAL RENDER
+    // --------------------------------------------------
+    render();
+
+})();
+</script>
+{% endblock %}

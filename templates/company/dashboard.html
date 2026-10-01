@@ -1,0 +1,503 @@
+﻿{% extends "base.html" %}
+
+{% block title %}
+Company Dashboard - SmartShop AI
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-container">
+
+```
+<!-- ==========================================
+     COMPANY HEADER
+     ========================================== -->
+
+<div class="section-heading-row">
+
+    <div>
+
+        <p class="small-heading">
+            COMPANY PORTAL
+        </p>
+
+        <h1>
+            Company Dashboard
+        </h1>
+
+        <p>
+            Welcome to your SmartShop AI company portal.
+            Manage products, stock, reservations and deals.
+        </p>
+
+    </div>
+
+</div>
+
+
+<!-- ==========================================
+     STATISTICS
+     ========================================== -->
+
+<div class="budget-overview">
+
+    <div class="budget-card">
+
+        <h3>
+            Total Products
+        </h3>
+
+        <h2>
+            {{ total_products }}
+        </h2>
+
+        <p>
+            Products listed in the marketplace.
+        </p>
+
+    </div>
+
+
+    <div class="budget-card">
+
+        <h3>
+            Total Stock
+        </h3>
+
+        <h2>
+            {{ total_stock }}
+        </h2>
+
+        <p>
+            Units currently available.
+        </p>
+
+    </div>
+
+
+    <div class="budget-card">
+
+        <h3>
+            Reservations
+        </h3>
+
+        <h2>
+            {{ total_reservations }}
+        </h2>
+
+        <p>
+            Student reservations.
+        </p>
+
+        <a
+            href="{{ url_for('company.reservations') }}"
+            class="btn"
+            style="display: inline-block; margin-top: 10px;"
+        >
+            View Reservations
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- ==========================================
+     COMPANY MANAGEMENT
+     ========================================== -->
+
+<div class="section-header">
+
+    <div>
+
+        <h2>
+            Company Management
+        </h2>
+
+        <p>
+            Manage your SmartShop AI business activities.
+        </p>
+
+    </div>
+
+</div>
+
+
+<div class="product-grid">
+
+    <!-- ======================================
+         PRODUCTS
+         ====================================== -->
+
+    <div class="dashboard-card">
+
+        <h3>
+            📦 Products
+        </h3>
+
+        <p>
+            Add and manage the products your company
+            offers to students.
+        </p>
+
+        <a
+            href="{{ url_for('company.add_product') }}"
+            class="btn-primary"
+        >
+            Add Product
+        </a>
+
+    </div>
+
+
+    <!-- ======================================
+         RESERVATIONS
+         ====================================== -->
+
+    <div class="dashboard-card">
+
+        <h3>
+            📅 Reservations
+        </h3>
+
+        <p>
+            View student reservations and approve
+            or reject reservation requests.
+        </p>
+
+        <a
+            href="{{ url_for('company.reservations') }}"
+            class="btn-primary"
+        >
+            Manage Reservations
+        </a>
+
+    </div>
+
+
+    <!-- ======================================
+         DEALS
+         ====================================== -->
+
+    <div class="dashboard-card">
+
+        <h3>
+            🏷️ Deals & Sales
+        </h3>
+
+        <p>
+            Create special offers, promotions and
+            upcoming sales for students.
+        </p>
+
+        <a
+            href="{{ url_for('company.deals') }}"
+            class="btn-primary"
+        >
+            Manage Deals
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- ==========================================
+     YOUR PRODUCTS
+     ========================================== -->
+
+<div class="section-header">
+
+    <div>
+
+        <h2>
+            Your Products
+        </h2>
+
+        <p>
+            Manage products currently listed by your company.
+        </p>
+
+    </div>
+
+    <a
+        href="{{ url_for('company.add_product') }}"
+        class="btn-primary"
+    >
+        + Add Product
+    </a>
+
+</div>
+
+
+{% if products %}
+
+    <div class="product-grid">
+
+        {% for product in products %}
+
+        <div class="product-card">
+
+            <!-- ==================================
+                 PRODUCT IMAGE / CATEGORY
+                 ================================== -->
+
+            <div class="product-image">
+
+                {% if product.image %}
+
+                    <img
+                        src="{{ url_for(
+                            'static',
+                            filename='images/' + product.image
+                        ) }}"
+                        alt="{{ product.name }}"
+                    >
+
+                {% else %}
+
+                    <span>
+                        {{ product.category }}
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+
+            <!-- ==================================
+                 PRODUCT INFORMATION
+                 ================================== -->
+
+            <div class="product-content">
+
+                <p class="product-category">
+                    {{ product.category }}
+                </p>
+
+
+                <h3>
+                    {{ product.name }}
+                </h3>
+
+
+                {% if product.description %}
+
+                <p>
+                    {{ product.description }}
+                </p>
+
+                {% endif %}
+
+
+                <!-- PRICE -->
+
+                <p>
+                    <strong>
+                        Price:
+                    </strong>
+
+                    R{{ "%.2f"|format(product.price) }}
+
+                </p>
+
+
+                <!-- SHOP -->
+
+                <p>
+                    <strong>
+                        Shop:
+                    </strong>
+
+                    {{ product.shop_name }}
+
+                </p>
+
+
+                <!-- LOCATION -->
+
+                {% if product.location %}
+
+                <p>
+
+                    <strong>
+                        Location:
+                    </strong>
+
+                    {{ product.location }}
+
+                </p>
+
+                {% endif %}
+
+
+                <!-- ==================================
+                     STOCK MANAGEMENT
+                     ================================== -->
+
+                <div class="reservation-info">
+
+                    <p>
+                        <strong>
+                            Current Stock:
+                        </strong>
+
+                        {{ product.stock_quantity }}
+                    </p>
+
+
+                    {% if product.stock_quantity > 0 %}
+
+                    <p>
+                        <strong>
+                            Status:
+                        </strong>
+
+                        In Stock
+                    </p>
+
+                    {% else %}
+
+                    <p>
+                        <strong>
+                            Status:
+                        </strong>
+
+                        Out of Stock
+                    </p>
+
+                    {% endif %}
+
+
+                    <form
+                        method="POST"
+                        action="{{ url_for(
+                            'company.update_stock',
+                            product_id=product.id
+                        ) }}"
+                    >
+
+                        <div class="form-group">
+
+                            <label
+                                for="stock-{{ product.id }}"
+                            >
+                                Update Stock
+                            </label>
+
+                            <input
+                                type="number"
+                                id="stock-{{ product.id }}"
+                                name="stock_quantity"
+                                min="0"
+                                value="{{ product.stock_quantity }}"
+                                required
+                            >
+
+                        </div>
+
+
+                        <button
+                            type="submit"
+                            class="btn-primary"
+                        >
+                            Update Stock
+                        </button>
+
+                    </form>
+
+                </div>
+
+
+                <!-- ==================================
+                     PRODUCT ACTIONS
+                     ================================== -->
+
+                <div
+                    style="
+                        margin-top: 15px;
+                        display: flex;
+                        gap: 10px;
+                        flex-wrap: wrap;
+                    "
+                >
+
+                    <!-- EDIT PRODUCT -->
+
+                    <a
+                        href="{{ url_for(
+                            'company.edit_product',
+                            product_id=product.id
+                        ) }}"
+                        class="btn-primary"
+                    >
+                        Edit Product
+                    </a>
+
+
+                    <!-- DELETE PRODUCT -->
+
+                    <form
+                        method="POST"
+                        action="{{ url_for(
+                            'company.delete_product',
+                            product_id=product.id
+                        ) }}"
+                        style="display: inline;"
+                    >
+
+                        <button
+                            type="submit"
+                            class="btn-danger"
+                            onclick="return confirm(
+                                'Are you sure you want to delete this product?'
+                            );"
+                        >
+                            Delete Product
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+
+{% else %}
+
+    <!-- ==========================================
+         NO PRODUCTS
+         ========================================== -->
+
+    <div class="dashboard-card">
+
+        <h3>
+            No products yet
+        </h3>
+
+        <p>
+            You have not added any products to the
+            SmartShop AI marketplace.
+        </p>
+
+        <a
+            href="{{ url_for('company.add_product') }}"
+            class="btn-primary"
+        >
+            Add Your First Product
+        </a>
+
+    </div>
+
+{% endif %}
+```
+
+</div>
+
+{% endblock %}

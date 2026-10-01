@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compare {{ category.label }} - SmartShop AI</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+    /* ============ DESIGN TOKENS ============ */
+    :root{
+        --grape:#5B2EFF;  --grape-dark:#3E1BC9;
+        --coral:#FF5D73;  --mint:#19D3A2;
+        --sun:#FFC83D;    --sky:#38B6FF;
+        --ink:#1B1340;    --muted:#6B6590;
+        --bg:#F6F3FF;    --card:#FFFFFF;
+        --line:#E4DEFA;
+        --radius:20px;
+        --shadow:0 10px 30px rgba(91,46,255,.12);
+        --grad:linear-gradient(135deg,var(--grape),var(--coral));
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{
+        font-family:'DM Sans',system-ui,sans-serif;
+        color:var(--ink);background:var(--bg);
+        line-height:1.6;min-height:100vh;
+        display:flex;flex-direction:column;
+        background-image:
+            radial-gradient(circle at 8% 12%,rgba(255,93,115,.14),transparent 28%),
+            radial-gradient(circle at 92% 30%,rgba(25,211,162,.14),transparent 30%),
+            radial-gradient(circle at 50% 95%,rgba(255,200,61,.16),transparent 30%);
+        background-attachment:fixed;
+    }
+    h1,h2,h3,.logo{font-family:'Bricolage Grotesque',sans-serif;line-height:1.15}
+    h1{font-size:clamp(2rem,5vw,3.4rem);font-weight:800}
+    h2{font-size:clamp(1.5rem,3vw,2.1rem);font-weight:800}
+    h3{font-size:1.2rem;font-weight:600}
+    a{color:var(--grape);text-decoration:none}
+    img{max-width:100%;display:block}
+    :focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+
+    /* ============ NAVBAR ============ */
+    .navbar{
+        position:sticky;top:0;z-index:50;
+        display:flex;align-items:center;justify-content:space-between;
+        gap:16px;padding:12px 5%;
+        background:rgba(255,255,255,.85);
+        backdrop-filter:blur(14px);
+        border-bottom:2px solid var(--line);
+    }
+    .logo{display:flex;align-items:center;gap:10px;font-size:1.4rem;font-weight:800;color:var(--ink)}
+    .logo-mark{
+        width:38px;height:38px;border-radius:12px;
+        background:var(--grad);display:grid;place-items:center;
+        transform:rotate(-8deg);box-shadow:0 6px 14px rgba(255,93,115,.35);
+    }
+    .logo b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .navbar nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .navbar nav a{
+        padding:8px 14px;border-radius:999px;
+        color:var(--ink);font-weight:500;font-size:.95rem;
+        transition:background .2s,color .2s;
+    }
+    .navbar nav a:hover{background:var(--bg);color:var(--grape)}
+    .navbar nav a.active{background:var(--ink);color:#fff}
+    .navbar nav a.cta{background:var(--grad);color:#fff;font-weight:700}
+    .navbar nav a.logout{border:2px solid var(--line)}
+    .navbar nav a.logout:hover{border-color:var(--coral);color:var(--coral);background:#fff}
+    .menu-btn{
+        display:none;background:var(--ink);color:#fff;border:0;
+        width:42px;height:42px;border-radius:12px;font-size:1.3rem;cursor:pointer;
+    }
+    .role-badge{
+        font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:999px;
+        background:var(--sun);color:var(--ink);margin-left:4px;text-transform:capitalize;
+    }
+
+    /* ============ LAYOUT ============ */
+    main{flex:1;width:100%;max-width:1200px;margin:0 auto;padding:32px 5% 56px}
+
+    /* ============ FLASH ============ */
+    .flash{
+        display:flex;justify-content:space-between;align-items:center;gap:12px;
+        padding:14px 18px;border-radius:14px;margin-bottom:16px;
+        font-weight:500;border-left:6px solid var(--grape);
+        background:#fff;box-shadow:var(--shadow);
+    }
+    .flash.success{border-color:var(--mint);background:#E9FBF5}
+    .flash.danger,.flash.error{border-color:var(--coral);background:#FFEDEF}
+    .flash.warning{border-color:var(--sun);background:#FFF7DD}
+    .flash.info{border-color:var(--sky);background:#E8F6FF}
+    .flash button{background:none;border:0;font-size:1.2rem;cursor:pointer;color:var(--muted)}
+
+    /* ============ SHARED COMPONENTS ============ */
+    .card,.dashboard-card{
+        background:var(--card);border-radius:var(--radius);
+        padding:24px;box-shadow:var(--shadow);border:2px solid var(--line);
+    }
+    .btn,.btn-primary{
+        display:inline-block;padding:12px 24px;border-radius:999px;border:0;
+        background:var(--grape);color:#fff;font:700 1rem 'DM Sans',sans-serif;
+        cursor:pointer;transition:transform .15s,background .2s;
+    }
+    .btn:hover,.btn-primary:hover{background:var(--grape-dark);transform:translateY(-2px);color:#fff}
+    .btn-remove{
+        padding:8px 16px;border-radius:999px;background:transparent;
+        border:2px solid var(--line);color:var(--muted);
+        font:700 .85rem 'DM Sans',sans-serif;cursor:pointer;transition:all .2s;
+    }
+    .btn-remove:hover{border-color:var(--coral);color:var(--coral)}
+    label{display:block;font-weight:700;margin:14px 0 6px;font-size:.92rem}
+    input,select,textarea{
+        width:100%;padding:12px 16px;border-radius:14px;
+        border:2px solid var(--line);background:#fff;
+        font:inherit;color:var(--ink);transition:border-color .2s,box-shadow .2s;
+    }
+    input:focus,select:focus,textarea:focus{outline:0;border-color:var(--grape);box-shadow:0 0 0 4px rgba(91,46,255,.15)}
+
+    /* ============ PAGE: COMPARE ============ */
+    .back-link{
+        display:inline-block;margin-bottom:18px;padding:8px 16px;border-radius:999px;
+        background:#fff;border:2px solid var(--line);color:var(--ink);font-weight:500;font-size:.92rem;
+        transition:all .2s;
+    }
+    .back-link:hover{border-color:var(--grape);color:var(--grape)}
+    .section-heading-row{margin-bottom:24px}
+    .small-heading{color:var(--muted);font-size:.9rem;font-weight:500}
+    .section-heading-row .small-heading:first-child{
+        display:inline-block;padding:4px 12px;border-radius:999px;margin-bottom:8px;
+        background:#E9E2FF;color:var(--grape-dark);font-weight:700;font-size:.75rem;letter-spacing:.06em;
+    }
+    .section-heading-row h1{margin-bottom:6px}
+
+    /* budget cards */
+    .budget-overview{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+    .budget-card{
+        background:var(--card);border:2px solid var(--line);border-radius:var(--radius);
+        padding:20px 24px;box-shadow:var(--shadow);border-top:6px solid var(--grape);
+    }
+    .budget-card:nth-child(2){border-top-color:var(--sky)}
+    .budget-card:nth-child(3){border-top-color:var(--mint)}
+    .budget-card h3{font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:700;color:var(--muted);margin-bottom:4px}
+    .budget-card h2{color:var(--ink)}
+    .budget-card.danger{border-top-color:var(--coral);background:#FFEDEF}
+    .budget-card.danger h2{color:#B3243A}
+
+    /* search */
+    .marketplace-controls form{
+        display:flex;gap:10px;align-items:center;margin-bottom:20px;
+        background:#fff;padding:8px;border-radius:999px;border:2px solid var(--line);box-shadow:var(--shadow);
+    }
+    .marketplace-controls input{border:0;border-radius:999px;box-shadow:none;flex:1;min-width:0}
+    .marketplace-controls input:focus{box-shadow:none}
+    .marketplace-controls form:focus-within{border-color:var(--grape);box-shadow:0 0 0 4px rgba(91,46,255,.15)}
+
+    /* chips */
+    .chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px}
+    .chip{
+        padding:6px 16px;border-radius:999px;background:#fff;border:2px solid var(--line);
+        color:var(--ink);font-weight:500;font-size:.9rem;text-transform:capitalize;transition:all .2s;
+    }
+    .chip:hover{background:var(--grape);border-color:var(--grape);color:#fff}
+
+    /* products */
+    .product-grid{display:grid;gap:20px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+    .product-card{
+        background:var(--card);border-radius:var(--radius);border:2px solid var(--line);
+        box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;
+        transition:transform .2s,border-color .2s;
+    }
+    .product-card:hover{transform:translateY(-4px);border-color:var(--grape)}
+    .product-image{
+        width:100%;aspect-ratio:4/3;border-radius:14px;overflow:hidden;
+        background:var(--grad);margin-bottom:12px;display:grid;place-items:center;
+    }
+    .product-image img{width:100%;height:100%;object-fit:cover}
+    .product-image-placeholder{color:#fff;font:800 1.1rem 'Bricolage Grotesque',sans-serif;padding:8px;text-align:center}
+    .sale-badge,.combo-badge{
+        position:absolute;top:10px;padding:4px 12px;border-radius:999px;
+        font-size:.75rem;font-weight:700;
+    }
+    .sale-badge{left:10px;background:var(--coral);color:#fff}
+    .combo-badge{right:10px;background:var(--sun);color:var(--ink)}
+    .product-content{display:flex;flex-direction:column;flex:1}
+    .product-category{
+        align-self:flex-start;margin-bottom:6px;padding:2px 10px;border-radius:999px;
+        background:#E9E2FF;color:var(--grape-dark);font-size:.75rem;font-weight:700;
+    }
+    .product-name{margin-bottom:4px}
+    .product-shop{color:var(--muted);font-size:.9rem;margin-bottom:10px}
+    .product-bottom{display:flex;align-items:baseline;gap:10px;margin-bottom:14px;margin-top:auto}
+    .product-price{font:800 1.3rem 'Bricolage Grotesque',sans-serif;color:var(--grape)}
+    .product-was{color:var(--muted);font-size:.9rem}
+    .add-to-list-form{display:flex;gap:8px;align-items:center}
+    .add-to-list-form .tiny-input{width:64px;padding:10px 8px;text-align:center}
+    .add-to-list-form .btn-primary{flex:1;padding:10px 12px;font-size:.92rem}
+
+    /* shopping list */
+    .section-header{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+    .section-header p{color:var(--muted)}
+    .reservation-list{display:flex;flex-direction:column;gap:10px}
+    .reservation-row{
+        display:grid;grid-template-columns:56px 1fr auto auto auto;gap:16px;align-items:center;
+        padding:12px 14px;border-radius:16px;background:var(--bg);border:2px solid transparent;transition:border-color .2s;
+    }
+    .reservation-row:hover{border-color:var(--line)}
+    .reservation-thumb{width:56px;height:56px;border-radius:12px;background:var(--grad);overflow:hidden}
+    .reservation-thumb img{width:100%;height:100%;object-fit:cover}
+    .reservation-qty{font-weight:700;color:var(--muted)}
+    .reservation-price{font:800 1.05rem 'Bricolage Grotesque',sans-serif;color:var(--grape)}
+    .reservation-total{
+        margin-top:18px;padding:16px 20px;border-radius:16px;background:var(--ink);color:#fff;
+        display:flex;justify-content:space-between;font-size:1.05rem;
+    }
+
+    /* ============ FOOTER ============ */
+    footer{background:var(--ink);color:#CFC8F5;margin-top:auto;padding:36px 5% 24px;position:relative}
+    footer::before{
+        content:"";position:absolute;inset:0 0 auto 0;height:6px;
+        background:linear-gradient(90deg,var(--coral),var(--sun),var(--mint),var(--sky),var(--grape));
+    }
+    .footer-inner{max-width:1200px;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:space-between;gap:24px}
+    .footer-inner h3{color:#fff;margin-bottom:8px}
+    .footer-inner a{color:#CFC8F5;display:block;padding:2px 0}
+    .footer-inner a:hover{color:var(--sun)}
+    .copyright{max-width:1200px;margin:24px auto 0;padding-top:16px;border-top:1px solid rgba(255,255,255,.12);font-size:.85rem;text-align:center}
+
+    /* ============ RESPONSIVE ============ */
+    @media(max-width:860px){
+        .menu-btn{display:block}
+        .navbar nav{
+            display:none;position:absolute;top:100%;left:0;right:0;
+            flex-direction:column;align-items:stretch;padding:14px 5%;
+            background:#fff;border-bottom:2px solid var(--line);
+        }
+        .navbar nav.open{display:flex}
+        .navbar nav a{text-align:center}
+    }
+    @media(max-width:640px){
+        .reservation-row{grid-template-columns:48px 1fr auto;row-gap:8px}
+        .reservation-thumb{width:48px;height:48px}
+        .reservation-row form{grid-column:1 / -1}
+        .marketplace-controls form{border-radius:20px;flex-wrap:wrap}
+        .marketplace-controls .btn{width:100%}
+    }
+    @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+    </style>
+</head>
+
+<body>
+
+<!-- ============ NAVBAR ============ -->
+<header class="navbar">
+    <a class="logo" href="{{ url_for('home') }}">
+        <span class="logo-mark">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 7h12l1 13H5L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/>
+            </svg>
+        </span>
+        Smart<b>Shop</b> AI
+    </a>
+
+    <button class="menu-btn" id="menuBtn" aria-label="Toggle menu" aria-expanded="false">☰</button>
+
+    <nav id="mainNav">
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('student.dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('student.budget') }}" class="active">Budget</a>
+        <a href="{{ url_for('student.reservations') }}">Shopping List</a>
+        <a href="{{ url_for('student.ai_assistant') }}">✨ AI Assistant</a>
+        <a href="{{ url_for('student.profile') }}">Profile</a>
+        <span class="role-badge">{{ current_user.role }}</span>
+        <a href="{{ url_for('auth.logout') }}" class="logout">Logout</a>
+    </nav>
+</header>
+
+
+<main>
+
+    <!-- ============ FLASH MESSAGES ============ -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category_name, message in messages %}
+            <div class="flash {{ category_name }}">
+                <span>{{ message }}</span>
+                <button type="button" aria-label="Dismiss" onclick="this.parentElement.remove()">×</button>
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+    <a href="{{ url_for('student.budget_dashboard') }}" class="back-link">← Back to dashboard</a>
+
+    <!-- ============ HEADER ============ -->
+    <div class="section-heading-row">
+        <p class="small-heading">COMPARE PRICES</p>
+        <h1>{{ category.icon }} {{ category.label }}</h1>
+        <p class="small-heading">Search live prices and add items to your list.</p>
+    </div>
+
+    <!-- ============ CATEGORY HEADROOM ============ -->
+    {% set used = namespace(total=0) %}
+    {% for item in list_items %}
+        {% if item.cat_id == category.id %}
+            {% set used.total = used.total + item.price * item.quantity %}
+        {% endif %}
+    {% endfor %}
+
+    {% set estimate = category.estimated or 0 %}
+    {% set remaining_cat = estimate - used.total %}
+
+    <section class="budget-overview" style="margin-bottom:24px;">
+        <div class="budget-card">
+            <h3>Category estimate</h3>
+            <h2>R {{ "%.2f"|format(estimate) }}</h2>
+        </div>
+        <div class="budget-card">
+            <h3>In list</h3>
+            <h2>R {{ "%.2f"|format(used.total) }}</h2>
+        </div>
+        <div class="budget-card {% if remaining_cat < 0 %}danger{% endif %}">
+            <h3>Remaining</h3>
+            <h2>R {{ "%.2f"|format(remaining_cat) }}</h2>
+        </div>
+    </section>
+
+    {% if estimate > 0 and used.total >= estimate %}
+        <div class="flash error">
+            <span>⚠ You've reached the estimate for {{ category.label }}.
+            Remove items from the list or increase the category estimate
+            on the dashboard before adding more.</span>
+        </div>
+    {% endif %}
+
+    <!-- ============ SEARCH ============ -->
+    <section class="marketplace-controls">
+        <form method="GET" action="{{ url_for('student.budget_compare', cat_id=category.id) }}">
+            <input
+                type="text"
+                name="search"
+                value="{{ search }}"
+                aria-label="Search products"
+                placeholder="{% if category.key == 'cosmetics' %}Search cosmetics… (vaseline, nivea, lotion, lipstick){% elif category.key == 'groceries' %}Search groceries… (milk, bread, rice){% elif category.key == 'stationery' %}Search stationery… (pen, notebook, ruler, eraser){% elif category.key == 'electronics' %}Search electronics… (charger, cable, earbuds, battery){% else %}Search {{ category.label }}…{% endif %}"
+                autofocus
+            >
+            <button type="submit" class="btn">Search</button>
+        </form>
+    </section>
+
+    <p class="small-heading" style="margin-bottom:14px;">
+        Showing results for: <strong>{{ search }}</strong>
+    </p>
+
+    <!-- ============ QUICK CHIPS ============ -->
+    {% if category.key == 'cosmetics' %}
+    <div class="chip-row">
+        {% for term in ['vaseline', 'nivea', 'lotion', 'lipstick', 'perfume', 'shampoo'] %}
+            <a class="chip" href="{{ url_for('student.budget_compare', cat_id=category.id, search=term) }}">{{ term }}</a>
+        {% endfor %}
+    </div>
+    {% elif category.key == 'groceries' %}
+    <div class="chip-row">
+        {% for term in ['milk', 'bread', 'rice', 'eggs', 'chicken', 'sugar'] %}
+            <a class="chip" href="{{ url_for('student.budget_compare', cat_id=category.id, search=term) }}">{{ term }}</a>
+        {% endfor %}
+    </div>
+    {% elif category.key == 'stationery' %}
+    <div class="chip-row">
+        {% for term in ['pen', 'pencil', 'notebook', 'eraser', 'ruler', 'highlighter'] %}
+            <a class="chip" href="{{ url_for('student.budget_compare', cat_id=category.id, search=term) }}">{{ term }}</a>
+        {% endfor %}
+    </div>
+    {% elif category.key == 'electronics' %}
+    <div class="chip-row">
+        {% for term in ['charger', 'cable', 'earbuds', 'headphones', 'battery', 'power bank'] %}
+            <a class="chip" href="{{ url_for('student.budget_compare', cat_id=category.id, search=term) }}">{{ term }}</a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ============ RESULTS ============ -->
+    {% if products %}
+        <div class="product-grid">
+            {% for p in products %}
+            <div class="product-card">
+
+                <div class="product-image" style="position:relative;">
+                    {% if p.image %}
+                        <img src="{{ p.image }}" alt="{{ p.name }}" loading="lazy">
+                    {% else %}
+                        <span class="product-image-placeholder">{{ p.category or 'Item' }}</span>
+                    {% endif %}
+
+                    {% if p.on_sale %}
+                        <span class="sale-badge">🔥 {{ p.sale_discount or 'SALE' }} · {{ p.sale_days_left }}d</span>
+                    {% endif %}
+                    {% if p.in_combo %}
+                        <span class="combo-badge">🎁 COMBO</span>
+                    {% endif %}
+                </div>
+
+                <div class="product-content">
+                    <p class="product-category">{{ p.category or "General" }}</p>
+                    <h3 class="product-name">{{ p.name }}</h3>
+                    <p class="product-shop"><strong>Shop:</strong> {{ p.shop_name }}</p>
+
+                    <div class="product-bottom">
+                        <strong class="product-price">R {{ "%.2f"|format(p.price) }}</strong>
+                        {% if p.on_sale and p.sale_original_price %}
+                            <span class="product-was"><s>R {{ "%.2f"|format(p.sale_original_price) }}</s></span>
+                        {% endif %}
+                    </div>
+
+                    <form method="POST" action="{{ url_for('student.add_to_list', barcode=p.id) }}" class="add-to-list-form">
+                        <input type="hidden" name="cat_id" value="{{ category.id }}">
+                        <input type="number" name="quantity" min="1" value="1" class="tiny-input" aria-label="Quantity">
+                        <button type="submit" class="btn-primary">🛒 Add to list</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="dashboard-card">
+            <h3>No products found for "{{ search }}"</h3>
+            <p class="small-heading">Try a different search term or use the quick chips above.</p>
+        </div>
+    {% endif %}
+
+    <!-- ============ SHOPPING LIST PREVIEW ============ -->
+    {% if list_items %}
+    <section id="shopping-list" class="dashboard-card" style="margin-top:40px;">
+        <div class="section-header">
+            <div>
+                <h2>🛒 Shopping List</h2>
+                <p>Items you've added so far.</p>
+            </div>
+            <a href="{{ url_for('student.reservations') }}" class="btn-primary">View full list</a>
+        </div>
+
+        <div class="reservation-list">
+            {% for item in list_items %}
+            <div class="reservation-row">
+                <div class="reservation-thumb">
+                    {% if item.image and item.image.startswith('http') %}
+                        <img src="{{ item.image }}" alt="{{ item.name }}">
+                    {% endif %}
+                </div>
+                <div class="reservation-info">
+                    <strong>{{ item.name }}</strong>
+                    <p class="small-heading">
+                        {{ item.shop_name }}
+                        {% if item.cat_id %}
+                            · {{ category.label if item.cat_id == category.id else 'Category ' ~ item.cat_id }}
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="reservation-qty">x{{ item.quantity }}</div>
+                <div class="reservation-price">R {{ "%.2f"|format(item.price * item.quantity) }}</div>
+                <form method="POST" action="{{ url_for('student.remove_from_list', barcode=item.barcode) }}">
+                    <button type="submit" class="btn-remove">Remove</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="reservation-total">
+            <strong>Total in this category</strong>
+            <span>R {{ "%.2f"|format(used.total) }}</span>
+        </div>
+    </section>
+    {% endif %}
+
+</main>
+
+
+<!-- ============ FOOTER ============ -->
+<footer>
+    <div class="footer-inner">
+        <div>
+            <h3>SmartShop AI</h3>
+            <p>Smart deals and budgets for students.</p>
+        </div>
+        <div>
+            <h3>Explore</h3>
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('student.budget') }}">Budget</a>
+            <a href="{{ url_for('student.reservations') }}">Shopping List</a>
+        </div>
+    </div>
+    <p class="copyright">© SmartShop AI</p>
+</footer>
+
+<script>
+    const menuBtn = document.getElementById('menuBtn');
+    const mainNav = document.getElementById('mainNav');
+    menuBtn.addEventListener('click', () => {
+        const open = mainNav.classList.toggle('open');
+        menuBtn.setAttribute('aria-expanded', open);
+    });
+    setTimeout(() => document.querySelectorAll('.flash').forEach(f => f.remove()), 6000);
+</script>
+
+</body>
+</html>

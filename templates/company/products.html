@@ -1,0 +1,203 @@
+﻿{% extends "base.html" %}
+
+{% block title %}
+Add Product - SmartShop AI
+{% endblock %}
+
+
+{% block content %}
+
+<div class="auth-container">
+
+    <div class="auth-card">
+
+        <h1>
+            Add Product
+        </h1>
+
+        <p class="auth-subtitle">
+            List a product for students to discover.
+        </p>
+
+
+        <form
+            method="POST"
+            action="{{ url_for('company.add_product') }}"
+        >
+
+
+            <div class="form-group">
+
+                <label>
+                    Product Name *
+                </label>
+
+                <input
+                    type="text"
+                    name="name"
+                    placeholder="e.g. Student Hoodie"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    Description
+                </label>
+
+                <textarea
+                    name="description"
+                    placeholder="Describe the product..."
+                    rows="4"
+                    style="width: 100%; box-sizing: border-box; padding: 12px; border-radius: 8px; border: 1px solid #ccc;"
+                ></textarea>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    Category *
+                </label>
+
+                <select
+                    name="category"
+                    required
+                >
+
+                    <option value="">
+                        Select category
+                    </option>
+
+                    <option value="Clothing">
+                        Clothing
+                    </option>
+
+                    <option value="Accessories">
+                        Accessories
+                    </option>
+
+                    <option value="Electronics">
+                        Electronics
+                    </option>
+
+                    <option value="Footwear">
+                        Footwear
+                    </option>
+
+                    <option value="Beauty">
+                        Beauty
+                    </option>
+
+                    <option value="Stationery">
+                        Stationery
+                    </option>
+
+                    <option value="Household">
+                        Household
+                    </option>
+
+                    <option value="Other">
+                        Other
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    Price (R) *
+                </label>
+
+                <input
+                    type="number"
+                    name="price"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    Stock Quantity *
+                </label>
+
+                <input
+                    type="number"
+                    name="stock_quantity"
+                    min="0"
+                    placeholder="0"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    Shop / Company Name *
+                </label>
+
+                <input
+                    type="text"
+                    name="shop_name"
+                    placeholder="Your shop name"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    Location
+                </label>
+
+                <input
+                    type="text"
+                    name="location"
+                    placeholder="e.g. Durban"
+                >
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="btn full-width"
+            >
+                Add Product
+            </button>
+
+
+        </form>
+
+
+        <p class="auth-footer">
+
+            <a href="{{ url_for('company.dashboard') }}">
+                ← Back to Dashboard
+            </a>
+
+        </p>
+
+
+    </div>
+
+</div>
+
+{% endblock %}

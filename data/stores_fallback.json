@@ -1,0 +1,31 @@
+[
+  {"name": "Checkers Hyper Gateway", "brand": "checkers", "brand_name": "Checkers", "latitude": -29.7831, "longitude": 31.0670, "address": "Gateway Umhlanga, Durban"},
+  {"name": "Checkers Pavilion", "brand": "checkers", "brand_name": "Checkers", "latitude": -29.8448, "longitude": 30.9421, "address": "Westville Pavilion, Durban"},
+  {"name": "Checkers Hyper Springfield", "brand": "checkers", "brand_name": "Checkers", "latitude": -29.8224, "longitude": 30.9728, "address": "Springfield Park, Durban"},
+  {"name": "Checkers Musgrave", "brand": "checkers", "brand_name": "Checkers", "latitude": -29.8467, "longitude": 30.9915, "address": "Musgrave Centre, Durban"},
+  {"name": "Checkers Bluff", "brand": "checkers", "brand_name": "Checkers", "latitude": -29.9124, "longitude": 31.0103, "address": "Bluff, Durban"},
+
+  {"name": "Shoprite Durban Station", "brand": "shoprite", "brand_name": "Shoprite", "latitude": -29.8503, "longitude": 31.0210, "address": "Durban Station, Durban"},
+  {"name": "Shoprite Chatsworth", "brand": "shoprite", "brand_name": "Shoprite", "latitude": -29.9078, "longitude": 30.8820, "address": "Chatsworth Centre, Durban"},
+  {"name": "Shoprite Umlazi Mega City", "brand": "shoprite", "brand_name": "Shoprite", "latitude": -29.9691, "longitude": 30.8890, "address": "Umlazi Mega City, Durban"},
+  {"name": "Shoprite Pinetown", "brand": "shoprite", "brand_name": "Shoprite", "latitude": -29.8147, "longitude": 30.8883, "address": "Pine Crest Centre, Pinetown"},
+  {"name": "Shoprite Phoenix Plaza", "brand": "shoprite", "brand_name": "Shoprite", "latitude": -29.7033, "longitude": 31.0040, "address": "Phoenix Plaza, Durban"},
+
+  {"name": "Pick n Pay Gateway", "brand": "pnp", "brand_name": "Pick n Pay", "latitude": -29.7835, "longitude": 31.0665, "address": "Gateway Theatre of Shopping, Umhlanga"},
+  {"name": "Pick n Pay Musgrave", "brand": "pnp", "brand_name": "Pick n Pay", "latitude": -29.8463, "longitude": 30.9917, "address": "Musgrave Centre, Durban"},
+  {"name": "Pick n Pay Pavilion", "brand": "pnp", "brand_name": "Pick n Pay", "latitude": -29.8451, "longitude": 30.9418, "address": "Westville Pavilion, Durban"},
+  {"name": "Pick n Pay Howard Centre", "brand": "pnp", "brand_name": "Pick n Pay", "latitude": -29.8264, "longitude": 31.0074, "address": "Howard Centre, Umgeni, Durban"},
+  {"name": "Pick n Pay Overport", "brand": "pnp", "brand_name": "Pick n Pay", "latitude": -29.8377, "longitude": 30.9978, "address": "Overport, Durban"},
+
+  {"name": "SPAR Umhlanga", "brand": "spar", "brand_name": "SPAR", "latitude": -29.7267, "longitude": 31.0848, "address": "Umhlanga Rocks Drive, Durban"},
+  {"name": "SPAR Westville", "brand": "spar", "brand_name": "SPAR", "latitude": -29.8328, "longitude": 30.9284, "address": "Westville, Durban"},
+  {"name": "SUPERSPAR Glenwood", "brand": "spar", "brand_name": "SPAR", "latitude": -29.8482, "longitude": 30.9851, "address": "Glenwood, Durban"},
+  {"name": "KWIKSPAR Florida Road", "brand": "spar", "brand_name": "SPAR", "latitude": -29.8351, "longitude": 31.0102, "address": "Florida Road, Durban"},
+  {"name": "SPAR Morningside", "brand": "spar", "brand_name": "SPAR", "latitude": -29.8323, "longitude": 31.0176, "address": "Morningside, Durban"},
+
+  {"name": "Boxer Chatsworth", "brand": "boxer", "brand_name": "Boxer", "latitude": -29.9103, "longitude": 30.8871, "address": "Chatsworth, Durban"},
+  {"name": "Boxer Umlazi", "brand": "boxer", "brand_name": "Boxer", "latitude": -29.9672, "longitude": 30.8834, "address": "Umlazi, Durban"},
+  {"name": "Boxer KwaMashu", "brand": "boxer", "brand_name": "Boxer", "latitude": -29.7298, "longitude": 30.9815, "address": "KwaMashu, Durban"},
+  {"name": "Boxer Phoenix", "brand": "boxer", "brand_name": "Boxer", "latitude": -29.7050, "longitude": 30.9953, "address": "Phoenix, Durban"},
+  {"name": "Boxer Inanda", "brand": "boxer", "brand_name": "Boxer", "latitude": -29.7020, "longitude": 30.9560, "address": "Inanda, Durban"}
+]

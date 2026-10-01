@@ -1,0 +1,304 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SmartShop AI{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Your original stylesheet still loads first; the styles below override it -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+    /* ============ DESIGN TOKENS ============ */
+    :root{
+        --grape:#5B2EFF;  --grape-dark:#3E1BC9;
+        --coral:#FF5D73;  --mint:#19D3A2;
+        --sun:#FFC83D;    --sky:#38B6FF;
+        --ink:#1B1340;    --muted:#6B6590;
+        --bg:#F6F3FF;    --card:#FFFFFF;
+        --line:#E4DEFA;
+        --radius:20px;
+        --shadow:0 10px 30px rgba(91,46,255,.12);
+        --grad:linear-gradient(135deg,var(--grape),var(--coral));
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{
+        font-family:'DM Sans',system-ui,sans-serif;
+        color:var(--ink);background:var(--bg);
+        line-height:1.6;min-height:100vh;
+        display:flex;flex-direction:column;
+        background-image:
+            radial-gradient(circle at 8% 12%,rgba(255,93,115,.14),transparent 28%),
+            radial-gradient(circle at 92% 30%,rgba(25,211,162,.14),transparent 30%),
+            radial-gradient(circle at 50% 95%,rgba(255,200,61,.16),transparent 30%);
+        background-attachment:fixed;
+    }
+    h1,h2,h3,.logo{font-family:'Bricolage Grotesque',sans-serif;line-height:1.15}
+    h1{font-size:clamp(2rem,5vw,3.4rem);font-weight:800}
+    h2{font-size:clamp(1.5rem,3vw,2.1rem);font-weight:800}
+    h3{font-size:1.2rem;font-weight:600}
+    a{color:var(--grape);text-decoration:none}
+    img{max-width:100%;display:block}
+    :focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+
+    /* ============ NAVBAR ============ */
+    .navbar{
+        position:sticky;top:0;z-index:50;
+        display:flex;align-items:center;justify-content:space-between;
+        gap:16px;padding:12px 5%;
+        background:rgba(255,255,255,.85);
+        backdrop-filter:blur(14px);
+        border-bottom:2px solid var(--line);
+    }
+    .logo{
+        display:flex;align-items:center;gap:10px;
+        font-size:1.4rem;font-weight:800;color:var(--ink);
+    }
+    .logo-mark{
+        width:38px;height:38px;border-radius:12px;
+        background:var(--grad);display:grid;place-items:center;
+        transform:rotate(-8deg);box-shadow:0 6px 14px rgba(255,93,115,.35);
+    }
+    .logo b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .navbar nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .navbar nav a{
+        padding:8px 14px;border-radius:999px;
+        color:var(--ink);font-weight:500;font-size:.95rem;
+        transition:background .2s,color .2s;
+    }
+    .navbar nav a:hover{background:var(--bg);color:var(--grape)}
+    .navbar nav a.active{background:var(--ink);color:#fff}
+    .navbar nav a.cta{background:var(--grad);color:#fff;font-weight:700}
+    .navbar nav a.logout{border:2px solid var(--line)}
+    .navbar nav a.logout:hover{border-color:var(--coral);color:var(--coral);background:#fff}
+    .menu-btn{
+        display:none;background:var(--ink);color:#fff;border:0;
+        width:42px;height:42px;border-radius:12px;font-size:1.3rem;cursor:pointer;
+    }
+    .role-badge{
+        font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:999px;
+        background:var(--sun);color:var(--ink);margin-left:4px;text-transform:capitalize;
+    }
+
+    /* ============ LAYOUT ============ */
+    main{flex:1;width:100%;max-width:1200px;margin:0 auto;padding:32px 5% 56px}
+
+    /* ============ FLASH MESSAGES ============ */
+    .flash{
+        display:flex;justify-content:space-between;align-items:center;gap:12px;
+        padding:14px 18px;border-radius:14px;margin-bottom:16px;
+        font-weight:500;border-left:6px solid var(--grape);
+        background:#fff;box-shadow:var(--shadow);
+    }
+    .flash.success{border-color:var(--mint);background:#E9FBF5}
+    .flash.danger,.flash.error{border-color:var(--coral);background:#FFEDEF}
+    .flash.warning{border-color:var(--sun);background:#FFF7DD}
+    .flash.info{border-color:var(--sky);background:#E8F6FF}
+    .flash button{background:none;border:0;font-size:1.2rem;cursor:pointer;color:var(--muted)}
+
+    /* ============ REUSABLE COMPONENTS (use on every page) ============ */
+    .card{
+        background:var(--card);border-radius:var(--radius);
+        padding:24px;box-shadow:var(--shadow);border:2px solid var(--line);
+    }
+    .grid{display:grid;gap:20px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+    .btn{
+        display:inline-block;padding:12px 24px;border-radius:999px;border:0;
+        background:var(--grape);color:#fff;font:700 1rem 'DM Sans',sans-serif;
+        cursor:pointer;transition:transform .15s,background .2s;
+    }
+    .btn:hover{background:var(--grape-dark);transform:translateY(-2px)}
+    .btn.coral{background:var(--coral)} .btn.mint{background:var(--mint);color:var(--ink)}
+    .btn.sun{background:var(--sun);color:var(--ink)}
+    .btn.ghost{background:transparent;color:var(--grape);border:2px solid var(--grape)}
+    .badge{display:inline-block;padding:4px 12px;border-radius:999px;font-size:.78rem;font-weight:700}
+    .badge.green{background:#D8F8EE;color:#0B7A5C} .badge.red{background:#FFE0E4;color:#B3243A}
+    .badge.yellow{background:#FFF0BF;color:#8A6200} .badge.purple{background:#E9E2FF;color:var(--grape-dark)}
+    .product-img{
+        width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:14px;
+        background:var(--grad);margin-bottom:12px;
+    }
+    .price{font:800 1.3rem 'Bricolage Grotesque',sans-serif;color:var(--grape)}
+
+    /* forms */
+    label{display:block;font-weight:700;margin:14px 0 6px;font-size:.92rem}
+    input,select,textarea{
+        width:100%;padding:12px 16px;border-radius:14px;
+        border:2px solid var(--line);background:#fff;
+        font:inherit;color:var(--ink);transition:border-color .2s,box-shadow .2s;
+    }
+    input:focus,select:focus,textarea:focus{
+        outline:0;border-color:var(--grape);box-shadow:0 0 0 4px rgba(91,46,255,.15);
+    }
+
+    /* tables */
+    table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;
+          border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+    th{background:var(--ink);color:#fff;text-align:left;padding:14px 16px;font-size:.88rem}
+    td{padding:14px 16px;border-bottom:1px solid var(--line)}
+    tr:last-child td{border-bottom:0}
+    tbody tr:hover{background:var(--bg)}
+
+    /* ============ FOOTER ============ */
+    footer{
+        background:var(--ink);color:#CFC8F5;margin-top:auto;
+        padding:36px 5% 24px;position:relative;
+    }
+    footer::before{
+        content:"";position:absolute;inset:0 0 auto 0;height:6px;
+        background:linear-gradient(90deg,var(--coral),var(--sun),var(--mint),var(--sky),var(--grape));
+    }
+    .footer-inner{
+        max-width:1200px;margin:0 auto;display:flex;flex-wrap:wrap;
+        justify-content:space-between;gap:24px;
+    }
+    .footer-inner h3{color:#fff;margin-bottom:8px}
+    .footer-inner a{color:#CFC8F5;display:block;padding:2px 0}
+    .footer-inner a:hover{color:var(--sun)}
+    .copyright{max-width:1200px;margin:24px auto 0;padding-top:16px;
+        border-top:1px solid rgba(255,255,255,.12);font-size:.85rem;text-align:center}
+
+    /* ============ RESPONSIVE ============ */
+    @media(max-width:860px){
+        .menu-btn{display:block}
+        .navbar nav{
+            display:none;position:absolute;top:100%;left:0;right:0;
+            flex-direction:column;align-items:stretch;padding:14px 5%;
+            background:#fff;border-bottom:2px solid var(--line);
+        }
+        .navbar nav.open{display:flex}
+        .navbar nav a{text-align:center}
+    }
+    @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+    </style>
+
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+
+<header class="navbar">
+
+    <a class="logo" href="{{ url_for('home') }}">
+        <span class="logo-mark">
+            <!-- inline SVG shopping bag: no image file needed -->
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 7h12l1 13H5L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/>
+            </svg>
+        </span>
+        Smart<b>Shop</b> AI
+    </a>
+
+    <button class="menu-btn" id="menuBtn" aria-label="Toggle menu" aria-expanded="false">☰</button>
+
+    <nav id="mainNav">
+
+        <a href="{{ url_for('home') }}" class="{{ 'active' if request.endpoint == 'home' }}">Home</a>
+
+        {% if current_user.is_authenticated %}
+
+            <!-- ========== STUDENT NAVIGATION ========== -->
+            {% if current_user.role == "student" %}
+
+                <a href="{{ url_for('student.dashboard') }}" class="{{ 'active' if request.endpoint == 'student.dashboard' }}">Dashboard</a>
+                <!-- <a href="{{ url_for('student.products') }}" class="{{ 'active' if request.endpoint == 'student.products' }}">Shop</a> -->
+                <a href="{{ url_for('student.budget') }}" class="{{ 'active' if request.endpoint == 'student.budget' }}">Budget</a>
+                <a href="{{ url_for('student.reservations') }}" class="{{ 'active' if request.endpoint == 'student.reservations' }}">Shopping List</a>
+                <a href="{{ url_for('student.ai_assistant') }}" class="{{ 'active' if request.endpoint == 'student.ai_assistant' }}">✨ AI Assistant</a>
+                <a href="{{ url_for('student.profile') }}" class="{{ 'active' if request.endpoint == 'student.profile' }}">Profile</a>
+
+            <!-- ========== COMPANY NAVIGATION ========== -->
+            {% elif current_user.role == "company" %}
+
+                <a href="{{ url_for('company.dashboard') }}" class="{{ 'active' if request.endpoint == 'company.dashboard' }}">Dashboard</a>
+                <a href="{{ url_for('company.products') }}" class="{{ 'active' if request.endpoint == 'company.products' }}">Products</a>
+                <a href="{{ url_for('company.reservations') }}" class="{{ 'active' if request.endpoint == 'company.reservations' }}">Reservations</a>
+                <a href="{{ url_for('company.deals') }}" class="{{ 'active' if request.endpoint == 'company.deals' }}">Deals</a>
+
+            <!-- ========== ADMIN NAVIGATION ========== -->
+            {% elif current_user.role == "admin" %}
+
+                <a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if request.endpoint == 'admin.dashboard' }}">Dashboard</a>
+                <a href="{{ url_for('admin.users') }}" class="{{ 'active' if request.endpoint == 'admin.users' }}">Users</a>
+                <a href="{{ url_for('admin.companies') }}" class="{{ 'active' if request.endpoint == 'admin.companies' }}">Companies</a>
+                <a href="{{ url_for('admin.products') }}" class="{{ 'active' if request.endpoint == 'admin.products' }}">Products</a>
+                <a href="{{ url_for('admin.deals') }}" class="{{ 'active' if request.endpoint == 'admin.deals' }}">Deals</a>
+
+            {% endif %}
+
+            <span class="role-badge">{{ current_user.role }}</span>
+            <a href="{{ url_for('auth.logout') }}" class="logout">Logout</a>
+
+        {% else %}
+
+            <!-- ========== GUEST NAVIGATION ========== -->
+            <a href="{{ url_for('auth.login') }}">Login</a>
+            <a href="{{ url_for('auth.register') }}" class="cta">Register</a>
+
+        {% endif %}
+
+    </nav>
+
+</header>
+
+
+<main>
+
+    <!-- ========== FLASH MESSAGES ========== -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">
+                    <span>{{ message }}</span>
+                    <button type="button" aria-label="Dismiss" onclick="this.parentElement.remove()">×</button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- ========== PAGE CONTENT ========== -->
+    {% block content %}{% endblock %}
+
+</main>
+
+
+<footer>
+    <div class="footer-inner">
+        <div>
+            <h3>SmartShop AI</h3>
+            <p>Smart deals and budgets for students.</p>
+        </div>
+        <div>
+            <h3>Explore</h3>
+            <a href="{{ url_for('home') }}">Home</a>
+            {% if not current_user.is_authenticated %}
+                <a href="{{ url_for('auth.login') }}">Login</a>
+                <a href="{{ url_for('auth.register') }}">Register</a>
+            {% endif %}
+        </div>
+    </div>
+    <p class="copyright">© SmartShop AI</p>
+</footer>
+
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script>
+    // Mobile menu toggle
+    const menuBtn = document.getElementById('menuBtn');
+    const mainNav = document.getElementById('mainNav');
+    menuBtn.addEventListener('click', () => {
+        const open = mainNav.classList.toggle('open');
+        menuBtn.setAttribute('aria-expanded', open);
+    });
+    // Auto-hide flash messages after 6 seconds
+    setTimeout(() => document.querySelectorAll('.flash').forEach(f => f.remove()), 6000);
+</script>
+{% block scripts %}{% endblock %}
+
+</body>
+</html>

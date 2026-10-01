@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}
+Company Management - SmartShop AI
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-container">
+
+    <div class="section-heading-row">
+
+        <div>
+
+            <p class="small-heading">
+                ADMINISTRATION
+            </p>
+
+            <h1>
+                Company Management
+            </h1>
+
+            <p>
+                Monitor companies registered on SmartShop AI.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="dashboard-card">
+
+        <h2>
+            Registered Companies
+        </h2>
+
+        <p>
+            Total companies:
+            <strong>{{ companies|length }}</strong>
+        </p>
+
+    </div>
+
+
+    {% if companies %}
+
+    <div class="product-grid">
+
+        {% for company in companies %}
+
+        <div class="product-card">
+
+            <div class="product-image">
+                🏪
+            </div>
+
+
+            <div class="product-content">
+
+                <p class="product-category">
+                    COMPANY
+                </p>
+
+                <h3>
+                    {{ company.name }}
+                </h3>
+
+                <p>
+                    <strong>Email:</strong>
+                    {{ company.email }}
+                </p>
+
+                <p>
+                    <strong>Company ID:</strong>
+                    {{ company.id }}
+                </p>
+
+                <p>
+                    <strong>Account Type:</strong>
+                    Company
+                </p>
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+    {% else %}
+
+    <div class="dashboard-card">
+
+        <h3>
+            No companies found
+        </h3>
+
+        <p>
+            There are currently no companies registered
+            on SmartShop AI.
+        </p>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

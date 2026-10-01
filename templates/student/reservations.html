@@ -1,0 +1,329 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Reservations - SmartShop AI</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+    /* ============ DESIGN TOKENS ============ */
+    :root{
+        --grape:#5B2EFF;  --grape-dark:#3E1BC9;
+        --coral:#FF5D73;  --mint:#19D3A2;
+        --sun:#FFC83D;    --sky:#38B6FF;
+        --ink:#1B1340;    --muted:#6B6590;
+        --bg:#F6F3FF;    --card:#FFFFFF;
+        --line:#E4DEFA;
+        --radius:20px;
+        --shadow:0 10px 30px rgba(91,46,255,.12);
+        --grad:linear-gradient(135deg,var(--grape),var(--coral));
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{
+        font-family:'DM Sans',system-ui,sans-serif;
+        color:var(--ink);background:var(--bg);
+        line-height:1.6;min-height:100vh;
+        display:flex;flex-direction:column;
+        background-image:
+            radial-gradient(circle at 8% 12%,rgba(255,93,115,.14),transparent 28%),
+            radial-gradient(circle at 92% 30%,rgba(25,211,162,.14),transparent 30%),
+            radial-gradient(circle at 50% 95%,rgba(255,200,61,.16),transparent 30%);
+        background-attachment:fixed;
+    }
+    h1,h2,h3,.logo{font-family:'Bricolage Grotesque',sans-serif;line-height:1.15}
+    h1{font-size:clamp(2rem,5vw,3.4rem);font-weight:800}
+    h2{font-size:clamp(1.5rem,3vw,2.1rem);font-weight:800}
+    h3{font-size:1.2rem;font-weight:600}
+    a{color:var(--grape);text-decoration:none}
+    img{max-width:100%;display:block}
+    :focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+
+    /* ============ NAVBAR ============ */
+    .navbar{
+        position:sticky;top:0;z-index:50;
+        display:flex;align-items:center;justify-content:space-between;
+        gap:16px;padding:12px 5%;
+        background:rgba(255,255,255,.85);
+        backdrop-filter:blur(14px);
+        border-bottom:2px solid var(--line);
+    }
+    .logo{display:flex;align-items:center;gap:10px;font-size:1.4rem;font-weight:800;color:var(--ink)}
+    .logo-mark{
+        width:38px;height:38px;border-radius:12px;
+        background:var(--grad);display:grid;place-items:center;
+        transform:rotate(-8deg);box-shadow:0 6px 14px rgba(255,93,115,.35);
+    }
+    .logo b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .navbar nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .navbar nav a{
+        padding:8px 14px;border-radius:999px;
+        color:var(--ink);font-weight:500;font-size:.95rem;
+        transition:background .2s,color .2s;
+    }
+    .navbar nav a:hover{background:var(--bg);color:var(--grape)}
+    .navbar nav a.active{background:var(--ink);color:#fff}
+    .navbar nav a.logout{border:2px solid var(--line)}
+    .navbar nav a.logout:hover{border-color:var(--coral);color:var(--coral);background:#fff}
+    .menu-btn{
+        display:none;background:var(--ink);color:#fff;border:0;
+        width:42px;height:42px;border-radius:12px;font-size:1.3rem;cursor:pointer;
+    }
+    .role-badge{
+        font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:999px;
+        background:var(--sun);color:var(--ink);margin-left:4px;text-transform:capitalize;
+    }
+
+    /* ============ LAYOUT ============ */
+    main{flex:1;width:100%;max-width:1200px;margin:0 auto;padding:32px 5% 56px}
+
+    /* ============ FLASH ============ */
+    .flash{
+        display:flex;justify-content:space-between;align-items:center;gap:12px;
+        padding:14px 18px;border-radius:14px;margin-bottom:16px;
+        font-weight:500;border-left:6px solid var(--grape);
+        background:#fff;box-shadow:var(--shadow);
+    }
+    .flash.success{border-color:var(--mint);background:#E9FBF5}
+    .flash.danger,.flash.error{border-color:var(--coral);background:#FFEDEF}
+    .flash.warning{border-color:var(--sun);background:#FFF7DD}
+    .flash.info{border-color:var(--sky);background:#E8F6FF}
+    .flash button{background:none;border:0;font-size:1.2rem;cursor:pointer;color:var(--muted)}
+
+    /* ============ SHARED ============ */
+    .dashboard-card{
+        background:var(--card);border-radius:var(--radius);
+        padding:24px;box-shadow:var(--shadow);border:2px solid var(--line);
+    }
+    .small-heading{color:var(--muted);font-size:.9rem;font-weight:500}
+    .btn-remove{
+        padding:8px 16px;border-radius:999px;background:transparent;
+        border:2px solid var(--line);color:var(--muted);
+        font:700 .85rem 'DM Sans',sans-serif;cursor:pointer;transition:all .2s;
+    }
+    .btn-remove:hover{border-color:var(--coral);color:var(--coral);background:#fff}
+
+    /* ============ PAGE: RESERVATIONS ============ */
+    .section-heading-row{margin-bottom:28px}
+    .section-heading-row .small-heading:first-child{
+        display:inline-block;padding:4px 12px;border-radius:999px;margin-bottom:8px;
+        background:#E9E2FF;color:var(--grape-dark);font-weight:700;font-size:.75rem;letter-spacing:.06em;
+    }
+    .section-heading-row h1{margin-bottom:6px}
+    .sub-heading{margin:0 0 16px;display:flex;align-items:center;gap:10px}
+    .sub-heading::before{content:"";width:8px;height:28px;border-radius:99px;background:var(--grad)}
+
+    .reservation-list{display:flex;flex-direction:column;gap:12px}
+    .reservation-row{
+        display:grid;grid-template-columns:64px 1fr auto auto auto;gap:18px;align-items:center;
+        padding:14px 18px;border-radius:var(--radius);background:var(--card);
+        border:2px solid var(--line);box-shadow:var(--shadow);transition:border-color .2s,transform .2s;
+    }
+    .reservation-row:hover{border-color:var(--grape);transform:translateY(-2px)}
+    .reservation-row.no-thumb{grid-template-columns:1fr auto auto}
+    .reservation-thumb{width:64px;height:64px;border-radius:14px;background:var(--grad);overflow:hidden}
+    .reservation-thumb img{width:100%;height:100%;object-fit:cover}
+    .reservation-qty{
+        padding:4px 12px;border-radius:999px;background:#E9E2FF;color:var(--grape-dark);font-weight:700;font-size:.9rem;
+    }
+    .reservation-price{font:800 1.2rem 'Bricolage Grotesque',sans-serif;color:var(--grape)}
+    .reservation-total{
+        margin-top:18px;padding:18px 24px;border-radius:var(--radius);background:var(--ink);color:#fff;
+        display:flex;justify-content:space-between;align-items:center;font-size:1.1rem;
+    }
+    .reservation-total span{font:800 1.5rem 'Bricolage Grotesque',sans-serif;color:var(--sun)}
+
+    /* status pills */
+    .reservation-status{
+        padding:4px 14px;border-radius:999px;font-size:.8rem;font-weight:700;
+        text-transform:capitalize;background:#E9E2FF;color:var(--grape-dark);
+    }
+    .status-active{background:#D8F8EE;color:#0B7A5C}
+    .status-pending{background:#FFF0BF;color:#8A6200}
+    .status-cancelled,.status-expired{background:#FFE0E4;color:#B3243A}
+    .status-completed{background:#DDF1FF;color:#0B5E91}
+
+    /* empty state */
+    .empty-state{text-align:center;padding:40px 24px}
+    .empty-state .emoji{font-size:2.6rem;margin-bottom:8px}
+    .empty-state p{color:var(--muted)}
+
+    /* ============ FOOTER ============ */
+    footer{background:var(--ink);color:#CFC8F5;margin-top:auto;padding:36px 5% 24px;position:relative}
+    footer::before{
+        content:"";position:absolute;inset:0 0 auto 0;height:6px;
+        background:linear-gradient(90deg,var(--coral),var(--sun),var(--mint),var(--sky),var(--grape));
+    }
+    .footer-inner{max-width:1200px;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:space-between;gap:24px}
+    .footer-inner h3{color:#fff;margin-bottom:8px}
+    .footer-inner a{color:#CFC8F5;display:block;padding:2px 0}
+    .footer-inner a:hover{color:var(--sun)}
+    .copyright{max-width:1200px;margin:24px auto 0;padding-top:16px;border-top:1px solid rgba(255,255,255,.12);font-size:.85rem;text-align:center}
+
+    /* ============ RESPONSIVE ============ */
+    @media(max-width:860px){
+        .menu-btn{display:block}
+        .navbar nav{
+            display:none;position:absolute;top:100%;left:0;right:0;
+            flex-direction:column;align-items:stretch;padding:14px 5%;
+            background:#fff;border-bottom:2px solid var(--line);
+        }
+        .navbar nav.open{display:flex}
+        .navbar nav a{text-align:center}
+    }
+    @media(max-width:640px){
+        .reservation-row{grid-template-columns:52px 1fr auto;row-gap:10px}
+        .reservation-thumb{width:52px;height:52px}
+        .reservation-row form{grid-column:1 / -1}
+        .reservation-row.no-thumb{grid-template-columns:1fr auto}
+    }
+    @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+    </style>
+</head>
+
+<body>
+
+<!-- ============ NAVBAR ============ -->
+<header class="navbar">
+    <a class="logo" href="{{ url_for('home') }}">
+        <span class="logo-mark">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 7h12l1 13H5L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/>
+            </svg>
+        </span>
+        Smart<b>Shop</b> AI
+    </a>
+
+    <button class="menu-btn" id="menuBtn" aria-label="Toggle menu" aria-expanded="false">☰</button>
+
+    <nav id="mainNav">
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('student.dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('student.budget') }}">Budget</a>
+        <a href="{{ url_for('student.reservations') }}" class="active">Shopping List</a>
+        <a href="{{ url_for('student.ai_assistant') }}">✨ AI Assistant</a>
+        <a href="{{ url_for('student.profile') }}">Profile</a>
+        <span class="role-badge">{{ current_user.role }}</span>
+        <a href="{{ url_for('auth.logout') }}" class="logout">Logout</a>
+    </nav>
+</header>
+
+
+<main>
+
+    <!-- ============ FLASH MESSAGES ============ -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="flash {{ category }}">
+                <span>{{ message }}</span>
+                <button type="button" aria-label="Dismiss" onclick="this.parentElement.remove()">×</button>
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+    <div class="dashboard-container">
+
+        <div class="section-heading-row">
+            <p class="small-heading">MY RESERVATIONS</p>
+            <h1>Reserved Items</h1>
+            <p class="small-heading">Items you've added from the marketplace.</p>
+        </div>
+
+        <!-- ============ SHOPPING LIST ============ -->
+        <h2 class="sub-heading">Reservation List</h2>
+
+        {% if list_items %}
+            <div class="reservation-list">
+                {% for item in list_items %}
+                <div class="reservation-row">
+                    <div class="reservation-thumb">
+                        {% if item.image and item.image.startswith('http') %}
+                            <img src="{{ item.image }}" alt="{{ item.name }}" loading="lazy">
+                        {% endif %}
+                    </div>
+                    <div class="reservation-info">
+                        <strong>{{ item.name }}</strong>
+                        <p class="small-heading">{{ item.shop_name }}</p>
+                    </div>
+                    <div class="reservation-qty">x{{ item.quantity }}</div>
+                    <div class="reservation-price">R{{ "%.2f"|format(item.price * item.quantity) }}</div>
+                    <form method="POST" action="{{ url_for('student.remove_from_list', barcode=item.barcode) }}">
+                        <button type="submit" class="btn-remove">Remove</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="reservation-total">
+                <strong>Total</strong>
+                <span>R{{ "%.2f"|format(list_total) }}</span>
+            </div>
+        {% else %}
+            <div class="dashboard-card empty-state">
+                <div class="emoji">🛒</div>
+                <p>Your reservation list is empty. Browse the marketplace to add items.</p>
+            </div>
+        {% endif %}
+
+        <!-- ============ DB RESERVATIONS ============ -->
+        {% if reservations %}
+            <h2 class="sub-heading" style="margin-top:44px;">Reserved for Pickup</h2>
+
+            <div class="reservation-list">
+                {% for r in reservations %}
+                <div class="reservation-row no-thumb">
+                    <div class="reservation-info">
+                        <strong>{{ r.product.name }}</strong>
+                        <p class="small-heading">
+                            {{ r.start_date }} → {{ r.end_date }} · Qty: {{ r.quantity }}
+                        </p>
+                    </div>
+                    <div class="reservation-status status-{{ r.status }}">{{ r.status }}</div>
+                    {% if r.status == 'active' %}
+                    <form method="POST" action="{{ url_for('student.cancel_reservation', reservation_id=r.id) }}">
+                        <button type="submit" class="btn-remove">Cancel</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+    </div>
+
+</main>
+
+
+<!-- ============ FOOTER ============ -->
+<footer>
+    <div class="footer-inner">
+        <div>
+            <h3>SmartShop AI</h3>
+            <p>Smart deals and budgets for students.</p>
+        </div>
+        <div>
+            <h3>Explore</h3>
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('student.budget') }}">Budget</a>
+            <a href="{{ url_for('student.reservations') }}">Shopping List</a>
+        </div>
+    </div>
+    <p class="copyright">© SmartShop AI</p>
+</footer>
+
+<script>
+    const menuBtn = document.getElementById('menuBtn');
+    const mainNav = document.getElementById('mainNav');
+    menuBtn.addEventListener('click', () => {
+        const open = mainNav.classList.toggle('open');
+        menuBtn.setAttribute('aria-expanded', open);
+    });
+    setTimeout(() => document.querySelectorAll('.flash').forEach(f => f.remove()), 6000);
+</script>
+
+</body>
+</html>

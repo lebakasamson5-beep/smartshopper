@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}
+User Management - SmartShop AI
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-container">
+
+    <div class="section-heading-row">
+
+        <div>
+
+            <p class="small-heading">
+                ADMINISTRATION
+            </p>
+
+            <h1>
+                User Management
+            </h1>
+
+            <p>
+                View all registered SmartShop AI users.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="dashboard-card">
+
+        <h2>
+            Registered Users
+        </h2>
+
+        <p>
+            Total users:
+            <strong>{{ users|length }}</strong>
+        </p>
+
+    </div>
+
+
+    {% if users %}
+
+    <div class="product-grid">
+
+        {% for user in users %}
+
+        <div class="product-card">
+
+            <div class="product-image">
+
+                {% if user.role == "company" %}
+                    🏪
+                {% elif user.role == "admin" %}
+                    🛡️
+                {% else %}
+                    👤
+                {% endif %}
+
+            </div>
+
+
+            <div class="product-content">
+
+                <p class="product-category">
+                    {{ user.role|upper }}
+                </p>
+
+                <h3>
+                    {{ user.name }}
+                </h3>
+
+                <p>
+                    <strong>Email:</strong>
+                    {{ user.email }}
+                </p>
+
+                <p>
+                    <strong>Account Type:</strong>
+                    {{ user.role|capitalize }}
+                </p>
+
+                <p>
+                    <strong>User ID:</strong>
+                    {{ user.id }}
+                </p>
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+    {% else %}
+
+    <div class="dashboard-card">
+
+        <h3>
+            No users found
+        </h3>
+
+        <p>
+            There are currently no registered users.
+        </p>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

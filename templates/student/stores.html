@@ -1,0 +1,796 @@
+{% extends "base.html" %}
+
+{% block title %}Stores Near You - SmartShop AI{% endblock %}
+
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<style>
+:root {
+    --sl-radius: 16px;
+    --sl-green: #0a7d43;
+    --sl-blue: #2563eb;
+}
+
+/* ---------- Toolbar ---------- */
+.sl-toolbar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 20px 0 14px;
+}
+.sl-search {
+    flex: 1 1 240px;
+    position: relative;
+    min-width: 200px;
+}
+.sl-search input {
+    width: 100%;
+    padding: 11px 36px 11px 38px;
+    border: 2px solid var(--line, #e5e7eb);
+    border-radius: 30px;
+    font-size: 14px;
+    background: #fff;
+    color: var(--ink, #111827);
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+}
+.sl-search input:focus {
+    border-color: var(--grape, #6d28d9);
+    box-shadow: 0 0 0 3px rgba(109, 40, 217, .15);
+}
+.sl-search .ico {
+    position: absolute; left: 14px; top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none; font-size: 14px;
+}
+.sl-search .clear {
+    position: absolute; right: 8px; top: 50%;
+    transform: translateY(-50%);
+    border: 0; background: #eee; border-radius: 50%;
+    width: 22px; height: 22px; cursor: pointer;
+    font-size: 12px; display: none; line-height: 22px; padding: 0;
+}
+.sl-search input:not(:placeholder-shown) ~ .clear { display: block; }
+
+.sl-seg {
+    display: inline-flex;
+    background: #fff;
+    border: 2px solid var(--line, #e5e7eb);
+    border-radius: 30px;
+    padding: 3px;
+    gap: 2px;
+}
+.sl-seg button {
+    border: 0; background: transparent; cursor: pointer;
+    padding: 6px 12px; border-radius: 30px;
+    font-size: 13px; font-weight: 600;
+    color: var(--ink, #111827);
+    transition: background .15s, color .15s;
+}
+.sl-seg button.active { background: var(--ink, #111827); color: #fff; }
+.sl-seg button:focus-visible,
+.sl-chip:focus-visible,
+.sl-card:focus-visible {
+    outline: 3px solid var(--grape, #6d28d9);
+    outline-offset: 2px;
+}
+
+.sl-status {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    min-height: 20px;
+    margin-bottom: 10px;
+}
+.sl-status.error { color: #b91c1c; }
+
+/* ---------- Brand chips ---------- */
+.sl-chips {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+}
+.sl-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 12px 7px 10px;
+    border-radius: 30px;
+    border: 2px solid var(--line, #e5e7eb);
+    background: #fff; cursor: pointer;
+    font-weight: 600; font-size: 13px;
+    color: var(--ink, #111827);
+    transition: border-color .15s, background .15s, color .15s;
+}
+.sl-chip .dot { width: 10px; height: 10px; border-radius: 50%; background: #999; }
+.sl-chip .n {
+    font-size: 11px; background: #f1f1f5; border-radius: 20px;
+    padding: 1px 7px; color: #555; min-width: 20px; text-align: center;
+}
+.sl-chip:hover { border-color: var(--grape, #6d28d9); }
+.sl-chip.active { background: var(--ink, #111827); border-color: var(--ink, #111827); color: #fff; }
+.sl-chip.active .n { background: rgba(255,255,255,.2); color: #fff; }
+
+/* ---------- Split layout ---------- */
+.sl-layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 16px;
+    height: 680px;
+}
+.sl-side {
+    overflow-y: auto;
+    padding-right: 4px;
+    display: flex; flex-direction: column; gap: 10px;
+    scrollbar-width: thin;
+}
+.sl-mapwrap {
+    position: relative;
+    border-radius: var(--sl-radius);
+    overflow: hidden;
+    box-shadow: 0 6px 24px rgba(0,0,0,.10);
+    background: #e9e9ef;
+    min-height: 360px;
+}
+#storeMap { width: 100%; height: 100%; }
+
+/* Floating map buttons */
+.sl-float {
+    position: absolute; z-index: 800;
+    display: flex; gap: 8px;
+}
+.sl-float.top { top: 12px; left: 50%; transform: translateX(-50%); }
+.sl-float.bottom { bottom: 28px; right: 12px; flex-direction: column; }
+.sl-pill {
+    border: 0; cursor: pointer;
+    background: #fff; color: var(--ink, #111827);
+    padding: 9px 16px; border-radius: 30px;
+    font-weight: 700; font-size: 13px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.2);
+    transition: transform .15s, opacity .2s;
+}
+.sl-pill:hover { transform: translateY(-1px); }
+.sl-pill.hidden { opacity: 0; pointer-events: none; transform: translateY(-6px); }
+.sl-round {
+    width: 44px; height: 44px; border-radius: 50%; border: 0; cursor: pointer;
+    background: #fff; box-shadow: 0 4px 14px rgba(0,0,0,.2);
+    font-size: 18px; display: flex; align-items: center; justify-content: center;
+}
+.sl-round:hover { background: #f5f3ff; }
+
+/* ---------- Cards ---------- */
+.sl-card {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: #fff;
+    border: 2px solid var(--line, #e5e7eb);
+    border-radius: 14px; padding: 12px;
+    cursor: pointer; text-align: left;
+    transition: border-color .15s, box-shadow .15s;
+}
+.sl-card:hover { border-color: var(--grape, #6d28d9); }
+.sl-card.active {
+    border-color: var(--grape, #6d28d9);
+    box-shadow: 0 0 0 3px rgba(109, 40, 217, .15);
+}
+.sl-card .icon {
+    width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 19px;
+}
+.sl-card .info { flex: 1; min-width: 0; }
+.sl-card strong { display: block; font-size: 14px; color: var(--ink, #111827); }
+.sl-card .brand { font-size: 12px; font-weight: 600; color: #666; margin: 2px 0; }
+.sl-card .addr { font-size: 12px; color: #888; }
+.sl-card .meta {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    margin-top: 6px; font-size: 12px;
+}
+.sl-card .dist { color: var(--sl-green); font-weight: 700; }
+.sl-card .time { color: #777; }
+.sl-badge {
+    font-size: 10px; font-weight: 700; background: #dcfce7; color: #166534;
+    padding: 2px 8px; border-radius: 20px;
+}
+.sl-actions { display: flex; gap: 6px; margin-top: 8px; }
+.sl-btn-sm {
+    font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 8px;
+    border: 1.5px solid var(--line, #e5e7eb); background: #fff; cursor: pointer;
+    color: var(--ink, #111827); text-decoration: none; display: inline-block;
+}
+.sl-btn-sm.dark { background: #111827; color: #fff; border-color: #111827; }
+.sl-btn-sm:hover { border-color: var(--grape, #6d28d9); }
+
+/* Skeleton + empty */
+.sl-skel {
+    height: 92px; border-radius: 14px;
+    background: linear-gradient(90deg, #eee 25%, #f7f7f7 37%, #eee 63%);
+    background-size: 400% 100%;
+    animation: shimmer 1.3s infinite;
+}
+@keyframes shimmer { 0% { background-position: 100% 0 } 100% { background-position: 0 0 } }
+.sl-empty {
+    background: #fff; border: 2px dashed var(--line, #e5e7eb);
+    border-radius: 14px; padding: 28px 18px; text-align: center; color: #666;
+}
+.sl-empty strong { display: block; color: var(--ink, #111827); margin-bottom: 6px; }
+.sl-empty .sl-btn-sm { margin-top: 10px; }
+
+/* ---------- Markers ---------- */
+.sl-pin {
+    width: 36px; height: 36px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 13px; font-weight: 800;
+    border: 2.5px solid #fff;
+    box-shadow: 0 3px 8px rgba(0,0,0,.35);
+    transition: transform .2s, box-shadow .2s;
+}
+.sl-pin span { transform: rotate(45deg); }
+.sl-pin.active {
+    transform: rotate(-45deg) scale(1.3);
+    box-shadow: 0 0 0 4px rgba(109,40,217,.35), 0 6px 14px rgba(0,0,0,.4);
+}
+.sl-pin.nearest::after {
+    content: "★"; position: absolute; top: -9px; right: -9px;
+    transform: rotate(45deg);
+    background: #fbbf24; color: #78350f; border-radius: 50%;
+    width: 16px; height: 16px; font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+}
+.sl-user {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--sl-blue); border: 4px solid #fff;
+    animation: pulse 1.8s infinite;
+}
+@keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(37,99,235,.5); }
+    70%  { box-shadow: 0 0 0 16px rgba(37,99,235,0); }
+    100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+}
+.marker-cluster-custom {
+    background: var(--ink, #111827);
+    color: #fff; border: 3px solid #fff; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 13px;
+    box-shadow: 0 3px 10px rgba(0,0,0,.35);
+}
+.leaflet-popup-content-wrapper { border-radius: 14px; }
+.leaflet-popup-content { margin: 14px 16px; }
+
+/* Toast */
+.sl-toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translate(-50%, 20px);
+    background: #111827; color: #fff; padding: 10px 18px;
+    border-radius: 30px; font-size: 13px; font-weight: 600;
+    opacity: 0; pointer-events: none; z-index: 5000;
+    transition: opacity .2s, transform .2s;
+}
+.sl-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+    .sl-layout { grid-template-columns: 1fr; height: auto; }
+    .sl-mapwrap { height: 380px; order: -1; }
+    .sl-side { max-height: none; overflow: visible; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .sl-user, .sl-skel { animation: none; }
+    * { transition: none !important; }
+}
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="dashboard-container">
+
+    <a href="{{ url_for('student.dashboard') }}" class="back-link">← Back to dashboard</a>
+
+    <div class="section-heading-row">
+        <div>
+            <p class="small-heading">STORES NEAR YOU</p>
+            <h1>📍 Local Supermarkets</h1>
+            <p>Shoprite, Pick n Pay, SPAR, Checkers and Boxer near your location.</p>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="sl-toolbar">
+        <div class="sl-search">
+            <span class="ico">🔍</span>
+            <input id="searchInput" type="search" placeholder="Search by store name or address"
+                   autocomplete="off" aria-label="Search stores" />
+            <button class="clear" id="clearSearch" type="button" aria-label="Clear search">✕</button>
+        </div>
+
+        <div class="sl-seg" id="radiusSeg" role="group" aria-label="Search radius">
+            <button type="button" data-r="1000">1 km</button>
+            <button type="button" data-r="2000">2 km</button>
+            <button type="button" data-r="5000" class="active">5 km</button>
+            <button type="button" data-r="10000">10 km</button>
+        </div>
+
+        <div class="sl-seg" id="sortSeg" role="group" aria-label="Sort stores">
+            <button type="button" data-sort="distance" class="active">Nearest</button>
+            <button type="button" data-sort="name">A–Z</button>
+        </div>
+    </div>
+
+    <div class="sl-status" id="storeStatus" role="status" aria-live="polite">Loading…</div>
+
+    <!-- Brand chips -->
+    <div class="sl-chips" id="chips">
+        <button class="sl-chip active" data-brand="all"><span class="dot" style="background:#111827"></span>All <span class="n">0</span></button>
+        <button class="sl-chip" data-brand="shoprite"><span class="dot" style="background:#e2231a"></span>Shoprite <span class="n">0</span></button>
+        <button class="sl-chip" data-brand="pnp"><span class="dot" style="background:#0a4ea3"></span>Pick n Pay <span class="n">0</span></button>
+        <button class="sl-chip" data-brand="spar"><span class="dot" style="background:#007a3d"></span>SPAR <span class="n">0</span></button>
+        <button class="sl-chip" data-brand="checkers"><span class="dot" style="background:#00a0df"></span>Checkers <span class="n">0</span></button>
+        <button class="sl-chip" data-brand="boxer"><span class="dot" style="background:#f58220"></span>Boxer <span class="n">0</span></button>
+    </div>
+
+    <!-- Split layout: list + map -->
+    <div class="sl-layout">
+        <div class="sl-side" id="storeList" aria-label="Store results"></div>
+
+        <div class="sl-mapwrap">
+            <div id="storeMap"></div>
+
+            <div class="sl-float top">
+                <button class="sl-pill hidden" id="searchAreaBtn" type="button">🔎 Search this area</button>
+            </div>
+
+            <div class="sl-float bottom">
+                <button class="sl-round" id="locateBtn" type="button" title="Use my location" aria-label="Use my location">🎯</button>
+                <button class="sl-round" id="fitBtn" type="button" title="Show all results" aria-label="Show all results">⤢</button>
+                <button class="sl-round" id="reloadBtn" type="button" title="Reload" aria-label="Reload stores">🔄</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="sl-toast" id="toast" role="status"></div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script>
+(function () {
+
+    const $ = id => document.getElementById(id);
+    const listEl   = $("storeList");
+    const statusEl = $("storeStatus");
+    const DURBAN   = { lat: -29.8587, lon: 31.0218 };
+
+    const BRAND_META = {
+        shoprite: { emoji: "🛒", color: "#e2231a", short: "S"  },
+        pnp:      { emoji: "🛍️", color: "#0a4ea3", short: "P"  },
+        spar:     { emoji: "🏪", color: "#007a3d", short: "SP" },
+        checkers: { emoji: "🛒", color: "#00a0df", short: "C"  },
+        boxer:    { emoji: "🏪", color: "#f58220", short: "B"  }
+    };
+    const FALLBACK_META = { emoji: "🏬", color: "#333", short: "?" };
+
+    /* ---------- State ---------- */
+    const saved = (() => { try { return JSON.parse(localStorage.getItem("storePrefs")) || {}; } catch { return {}; } })();
+    const state = {
+        stores: [],
+        filter: saved.filter || "all",
+        radius: saved.radius || 5000,
+        sort: saved.sort || "distance",
+        query: "",
+        user: null,              // real GPS position
+        center: { ...DURBAN },   // search center
+        activeId: null
+    };
+    const cache = new Map();
+    const markerById = new Map();
+    let map, cluster, userMarker, radiusCircle, controller, searchedCenter = null;
+
+    function savePrefs() {
+        try { localStorage.setItem("storePrefs", JSON.stringify({ filter: state.filter, radius: state.radius, sort: state.sort })); } catch {}
+    }
+
+    /* ---------- Helpers ---------- */
+    const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+    function haversine(lat1, lon1, lat2, lon2) {
+        const r = x => x * Math.PI / 180, R = 6371;
+        const a = Math.sin(r(lat2 - lat1) / 2) ** 2 +
+                  Math.cos(r(lat1)) * Math.cos(r(lat2)) * Math.sin(r(lon2 - lon1) / 2) ** 2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+    const fmtDist = km => km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+    function fmtTime(km) {
+        if (km <= 2.5) return `🚶 ${Math.max(1, Math.round(km / 5 * 60))} min`;
+        return `🚗 ${Math.max(1, Math.round(km / 30 * 60))} min`;
+    }
+    function toast(msg) {
+        const t = $("toast");
+        t.textContent = msg; t.classList.add("show");
+        clearTimeout(toast._t);
+        toast._t = setTimeout(() => t.classList.remove("show"), 1800);
+    }
+    function setStatus(msg, isError = false) {
+        statusEl.textContent = msg;
+        statusEl.classList.toggle("error", isError);
+    }
+    /* Reference point for distances: GPS if known, else search centre */
+    const ref = () => state.user || state.center;
+
+    /* ---------- Map ---------- */
+    function initMap() {
+        /* Free OpenStreetMap tiles: no API key required */
+        const osm = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution: "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+        });
+        const osmHot = L.tileLayer("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", {
+            maxZoom: 19, subdomains: "abc",
+            attribution: "&copy; OpenStreetMap contributors, Tiles by HOT"
+        });
+        const topo = L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
+            maxZoom: 17, subdomains: "abc",
+            attribution: "&copy; OpenStreetMap contributors, SRTM | &copy; OpenTopoMap"
+        });
+
+        map = L.map("storeMap", { layers: [osm], zoomControl: false })
+               .setView([DURBAN.lat, DURBAN.lon], 12);
+        L.control.zoom({ position: "topright" }).addTo(map);
+        L.control.layers({ "Standard": osm, "Humanitarian": osmHot, "Terrain": topo }, null,
+                         { position: "topright", collapsed: true }).addTo(map);
+        L.control.scale({ imperial: false, position: "bottomleft" }).addTo(map);
+
+        cluster = L.markerClusterGroup({
+            showCoverageOnHover: false,
+            maxClusterRadius: 50,
+            iconCreateFunction: c => L.divIcon({
+                html: `<div class="marker-cluster-custom" style="width:40px;height:40px">${c.getChildCount()}</div>`,
+                className: "", iconSize: [40, 40]
+            })
+        });
+        map.addLayer(cluster);
+
+        /* "Search this area" appears once the map is moved far from last search */
+        map.on("moveend", () => {
+            if (!searchedCenter) return;
+            const c = map.getCenter();
+            const moved = haversine(searchedCenter.lat, searchedCenter.lon, c.lat, c.lng);
+            $("searchAreaBtn").classList.toggle("hidden", moved < Math.max(0.6, state.radius / 4000));
+        });
+    }
+
+    function makeStoreIcon(brand, { active = false, nearest = false } = {}) {
+        const m = BRAND_META[brand] || FALLBACK_META;
+        return L.divIcon({
+            className: "",
+            html: `<div class="sl-pin ${active ? "active" : ""} ${nearest ? "nearest" : ""}" style="background:${m.color}"><span>${m.short}</span></div>`,
+            iconSize: [36, 36], iconAnchor: [18, 36], popupAnchor: [0, -34]
+        });
+    }
+
+    function setUserMarker() {
+        if (!state.user) return;
+        if (userMarker) map.removeLayer(userMarker);
+        userMarker = L.marker([state.user.lat, state.user.lon], {
+            icon: L.divIcon({ className: "", html: `<div class="sl-user"></div>`, iconSize: [22, 22], iconAnchor: [11, 11] }),
+            zIndexOffset: 1000
+        }).addTo(map).bindPopup("📍 You are here");
+    }
+
+    function drawRadius() {
+        if (radiusCircle) map.removeLayer(radiusCircle);
+        radiusCircle = L.circle([state.center.lat, state.center.lon], {
+            radius: state.radius, color: "#6d28d9", weight: 1.5,
+            fillColor: "#6d28d9", fillOpacity: .04, dashArray: "6 6", interactive: false
+        }).addTo(map);
+    }
+
+    /* ---------- Data ---------- */
+    async function loadStores({ fit = true } = {}) {
+        const { lat, lon } = state.center;
+        const key = `${lat.toFixed(3)},${lon.toFixed(3)},${state.radius}`;
+
+        if (controller) controller.abort();
+        controller = new AbortController();
+
+        drawRadius();
+        searchedCenter = { ...state.center };
+        $("searchAreaBtn").classList.add("hidden");
+
+        if (cache.has(key)) {
+            state.stores = cache.get(key);
+            render({ fit });
+            return;
+        }
+
+        showSkeleton();
+        setStatus("Searching stores…");
+
+        const timer = setTimeout(() => controller.abort(), 40000);
+        try {
+            const res = await fetch(`/student/api/stores?lat=${lat}&lon=${lon}&radius=${state.radius}`,
+                                    { signal: controller.signal });
+            clearTimeout(timer);
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            const data = await res.json();
+            state.stores = (data.stores || []).map((s, i) => ({ ...s, _id: i }));
+            cache.set(key, state.stores);
+            render({ fit });
+        } catch (err) {
+            clearTimeout(timer);
+            if (err.name === "AbortError" && !controller.signal.aborted) return;
+            console.error(err);
+            setStatus("Could not load stores.", true);
+            listEl.innerHTML = `
+                <div class="sl-empty">
+                    <strong>⚠️ Store search failed</strong>
+                    Check your connection and try again.<br>
+                    <button class="sl-btn-sm dark" id="retryBtn" type="button">Try again</button>
+                </div>`;
+            $("retryBtn").addEventListener("click", () => loadStores());
+        }
+    }
+
+    function showSkeleton() {
+        listEl.innerHTML = Array.from({ length: 5 }, () => `<div class="sl-skel"></div>`).join("");
+    }
+
+    /* ---------- Render ---------- */
+    function enrich(arr) {
+        const r = ref();
+        return arr.map(s => ({ ...s, _km: haversine(r.lat, r.lon, s.latitude, s.longitude) }));
+    }
+
+    function render({ fit = false } = {}) {
+        const q = state.query.trim().toLowerCase();
+        const all = enrich(state.stores);
+
+        /* Query-filtered set drives chip counts */
+        const byQuery = q
+            ? all.filter(s => `${s.name} ${s.brand_name} ${s.address}`.toLowerCase().includes(q))
+            : all;
+
+        document.querySelectorAll(".sl-chip").forEach(chip => {
+            const b = chip.dataset.brand;
+            chip.querySelector(".n").textContent =
+                b === "all" ? byQuery.length : byQuery.filter(s => s.brand === b).length;
+            chip.classList.toggle("active", b === state.filter);
+        });
+
+        const visible = byQuery.filter(s => state.filter === "all" || s.brand === state.filter);
+        visible.sort(state.sort === "name"
+            ? (a, b) => a.name.localeCompare(b.name)
+            : (a, b) => a._km - b._km);
+
+        const nearestId = [...visible].sort((a, b) => a._km - b._km)[0]?._id;
+
+        /* Markers */
+        cluster.clearLayers();
+        markerById.clear();
+        visible.forEach(s => {
+            const mk = L.marker([s.latitude, s.longitude], {
+                icon: makeStoreIcon(s.brand, { nearest: s._id === nearestId && visible.length > 1 })
+            });
+            mk.bindPopup(popupHtml(s), { maxWidth: 260 });
+            mk.on("click", () => setActive(s._id, { from: "marker" }));
+            markerById.set(s._id, mk);
+            cluster.addLayer(mk);
+        });
+
+        /* List */
+        listEl.innerHTML = "";
+        if (!visible.length) {
+            const canWiden = state.radius < 10000;
+            listEl.innerHTML = `
+                <div class="sl-empty">
+                    <strong>😕 No stores found</strong>
+                    Try another brand, clear your search${canWiden ? ", or widen the radius" : ""}.
+                    ${canWiden ? `<br><button class="sl-btn-sm dark" id="widenBtn" type="button">Search wider</button>` : ""}
+                </div>`;
+            const w = $("widenBtn");
+            if (w) w.addEventListener("click", () => setRadius(state.radius >= 5000 ? 10000 : state.radius * 2));
+            setStatus("0 stores found");
+            return;
+        }
+
+        visible.forEach(s => listEl.appendChild(buildCard(s, s._id === nearestId)));
+        setStatus(`${visible.length} store${visible.length === 1 ? "" : "s"} within ${state.radius / 1000} km`);
+
+        if (fit) fitToResults(visible);
+        if (state.activeId !== null) highlightCard(state.activeId);
+    }
+
+    function buildCard(s, isNearest) {
+        const m = BRAND_META[s.brand] || FALLBACK_META;
+        const card = document.createElement("div");
+        card.className = "sl-card";
+        card.tabIndex = 0;
+        card.setAttribute("role", "button");
+        card.dataset.id = s._id;
+        card.innerHTML = `
+            <div class="icon" style="background:${m.color}">${m.emoji}</div>
+            <div class="info">
+                <strong>${esc(s.name)}</strong>
+                <div class="brand">${esc(s.brand_name)}</div>
+                <div class="addr">📍 ${esc(s.address)}</div>
+                <div class="meta">
+                    <span class="dist">🧭 ${fmtDist(s._km)} away</span>
+                    <span class="time">${fmtTime(s._km)}</span>
+                    ${isNearest ? `<span class="sl-badge">Nearest</span>` : ""}
+                </div>
+                <div class="sl-actions">
+                    <a class="sl-btn-sm dark" target="_blank" rel="noopener noreferrer"
+                       href="https://www.google.com/maps/dir/?api=1&destination=${s.latitude},${s.longitude}">Directions</a>
+                    <button class="sl-btn-sm js-copy" type="button" data-addr="${esc(s.address)}">Copy address</button>
+                </div>
+            </div>`;
+        const go = () => setActive(s._id, { from: "card" });
+        card.addEventListener("click", e => { if (!e.target.closest(".sl-actions")) go(); });
+        card.addEventListener("keydown", e => {
+            if ((e.key === "Enter" || e.key === " ") && e.target === card) { e.preventDefault(); go(); }
+        });
+        return card;
+    }
+
+    function popupHtml(s) {
+        return `
+            <div style="min-width:200px">
+                <strong style="font-size:14px">${esc(s.name)}</strong>
+                <div style="font-size:12px;color:#666;margin-top:3px">${esc(s.brand_name)}</div>
+                <div style="font-size:12px;margin-top:6px">📍 ${esc(s.address)}</div>
+                <div style="font-size:12px;color:#0a7d43;font-weight:700;margin-top:6px">
+                    🧭 ${fmtDist(s._km)} away · ${fmtTime(s._km)}
+                </div>
+                <div class="sl-actions">
+                    <a class="sl-btn-sm dark" target="_blank" rel="noopener noreferrer"
+                       href="https://www.google.com/maps/dir/?api=1&destination=${s.latitude},${s.longitude}">Directions</a>
+                    <button class="sl-btn-sm js-copy" type="button" data-addr="${esc(s.address)}">Copy address</button>
+                </div>
+            </div>`;
+    }
+
+    function fitToResults(visible) {
+        const pts = visible.map(s => [s.latitude, s.longitude]);
+        if (state.user) pts.push([state.user.lat, state.user.lon]);
+        if (pts.length === 1) { map.setView(pts[0], 15); return; }
+        map.fitBounds(L.latLngBounds(pts), { padding: [50, 50], maxZoom: 16 });
+    }
+
+    /* ---------- Selection ---------- */
+    function highlightCard(id) {
+        document.querySelectorAll(".sl-card").forEach(c => c.classList.toggle("active", +c.dataset.id === id));
+    }
+
+    function setActive(id, { from }) {
+        /* Reset previous marker icon */
+        if (state.activeId !== null && markerById.has(state.activeId)) {
+            const prev = state.stores.find(s => s._id === state.activeId);
+            markerById.get(state.activeId).setIcon(makeStoreIcon(prev.brand));
+        }
+        state.activeId = id;
+        const s = state.stores.find(x => x._id === id);
+        const mk = markerById.get(id);
+        if (!s || !mk) return;
+
+        mk.setIcon(makeStoreIcon(s.brand, { active: true }));
+        highlightCard(id);
+
+        if (from === "card") {
+            map.flyTo([s.latitude, s.longitude], Math.max(map.getZoom(), 16), { duration: .6 });
+            cluster.zoomToShowLayer(mk, () => mk.openPopup());
+        } else {
+            const card = listEl.querySelector(`.sl-card[data-id="${id}"]`);
+            if (card) card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+    }
+
+    /* ---------- Controls ---------- */
+    function setRadius(r) {
+        state.radius = r;
+        document.querySelectorAll("#radiusSeg button").forEach(b =>
+            b.classList.toggle("active", +b.dataset.r === r));
+        savePrefs();
+        loadStores();
+    }
+
+    function locateUser({ silent = false } = {}) {
+        if (!navigator.geolocation) {
+            if (!silent) toast("Geolocation isn't supported on this device");
+            loadStores();
+            return;
+        }
+        if (!silent) setStatus("Getting your location…");
+
+        navigator.geolocation.getCurrentPosition(
+            pos => {
+                state.user = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+                state.center = { ...state.user };
+                map.setView([state.user.lat, state.user.lon], 14);
+                setUserMarker();
+                loadStores();
+            },
+            () => {
+                if (!silent) toast("Location blocked. Showing Durban instead.");
+                loadStores();
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+        );
+    }
+
+    $("locateBtn").addEventListener("click", () => locateUser());
+    $("reloadBtn").addEventListener("click", () => {
+        cache.clear();
+        loadStores();
+    });
+    $("fitBtn").addEventListener("click", () => {
+        const pts = [...markerById.values()].map(m => m.getLatLng());
+        if (pts.length) map.fitBounds(L.latLngBounds(pts), { padding: [50, 50], maxZoom: 16 });
+    });
+    $("searchAreaBtn").addEventListener("click", () => {
+        const c = map.getCenter();
+        state.center = { lat: c.lat, lon: c.lng };
+        loadStores({ fit: false });
+    });
+
+    document.querySelectorAll("#radiusSeg button").forEach(b =>
+        b.addEventListener("click", () => setRadius(+b.dataset.r)));
+
+    document.querySelectorAll("#sortSeg button").forEach(b =>
+        b.addEventListener("click", () => {
+            state.sort = b.dataset.sort;
+            document.querySelectorAll("#sortSeg button").forEach(x => x.classList.toggle("active", x === b));
+            savePrefs();
+            render();
+        }));
+
+    document.querySelectorAll(".sl-chip").forEach(chip =>
+        chip.addEventListener("click", () => {
+            state.filter = chip.dataset.brand;
+            savePrefs();
+            render({ fit: true });
+        }));
+
+    let searchTimer;
+    $("searchInput").addEventListener("input", e => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => { state.query = e.target.value; render(); }, 180);
+    });
+    $("clearSearch").addEventListener("click", () => {
+        $("searchInput").value = "";
+        state.query = "";
+        render();
+        $("searchInput").focus();
+    });
+
+    /* Copy address (works from cards and popups) */
+    document.addEventListener("click", async e => {
+        const btn = e.target.closest(".js-copy");
+        if (!btn) return;
+        try {
+            await navigator.clipboard.writeText(btn.dataset.addr);
+            toast("Address copied");
+        } catch {
+            toast("Couldn't copy. Select the address manually.");
+        }
+    });
+
+    /* ---------- Start ---------- */
+    document.querySelectorAll("#radiusSeg button").forEach(b =>
+        b.classList.toggle("active", +b.dataset.r === state.radius));
+    document.querySelectorAll("#sortSeg button").forEach(b =>
+        b.classList.toggle("active", b.dataset.sort === state.sort));
+
+    initMap();
+    showSkeleton();
+    locateUser({ silent: true });
+
+})();
+</script>
+{% endblock %}

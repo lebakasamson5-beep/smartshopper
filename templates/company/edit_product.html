@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}
+Edit Product - SmartShop AI
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-container">
+
+    <div class="section-heading-row">
+
+        <div>
+
+            <p class="small-heading">
+                PRODUCT MANAGEMENT
+            </p>
+
+            <h1>
+                Edit Product
+            </h1>
+
+            <p>
+                Update the information and pricing of your product.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="dashboard-card">
+
+        <form
+            method="POST"
+            action="{{ url_for(
+                'company.edit_product',
+                product_id=product.id
+            ) }}"
+        >
+
+            <!-- PRODUCT NAME -->
+
+            <div class="form-group">
+
+                <label for="name">
+                    Product Name
+                </label>
+
+                <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value="{{ product.name }}"
+                    required
+                >
+
+            </div>
+
+
+            <!-- DESCRIPTION -->
+
+            <div class="form-group">
+
+                <label for="description">
+                    Description
+                </label>
+
+                <textarea
+                    id="description"
+                    name="description"
+                    rows="4"
+                >{{ product.description or "" }}</textarea>
+
+            </div>
+
+
+            <!-- CATEGORY -->
+
+            <div class="form-group">
+
+                <label for="category">
+                    Category
+                </label>
+
+                <input
+                    type="text"
+                    id="category"
+                    name="category"
+                    value="{{ product.category }}"
+                    required
+                >
+
+            </div>
+
+
+            <!-- PRICE -->
+
+            <div class="form-group">
+
+                <label for="price">
+                    Price (R)
+                </label>
+
+                <input
+                    type="number"
+                    id="price"
+                    name="price"
+                    step="0.01"
+                    min="0"
+                    value="{{ product.price }}"
+                    required
+                >
+
+            </div>
+
+
+            <!-- STOCK -->
+
+            <div class="form-group">
+
+                <label for="stock_quantity">
+                    Stock Quantity
+                </label>
+
+                <input
+                    type="number"
+                    id="stock_quantity"
+                    name="stock_quantity"
+                    min="0"
+                    value="{{ product.stock_quantity }}"
+                    required
+                >
+
+            </div>
+
+
+            <!-- SHOP -->
+
+            <div class="form-group">
+
+                <label for="shop_name">
+                    Shop Name
+                </label>
+
+                <input
+                    type="text"
+                    id="shop_name"
+                    name="shop_name"
+                    value="{{ product.shop_name }}"
+                    required
+                >
+
+            </div>
+
+
+            <!-- LOCATION -->
+
+            <div class="form-group">
+
+                <label for="location">
+                    Shop Location
+                </label>
+
+                <input
+                    type="text"
+                    id="location"
+                    name="location"
+                    value="{{ product.location or "" }}"
+                >
+
+            </div>
+
+
+            <!-- BUTTONS -->
+
+            <button
+                type="submit"
+                class="btn-primary"
+            >
+                Save Changes
+            </button>
+
+
+            <a
+                href="{{ url_for('company.dashboard') }}"
+                class="btn"
+            >
+                Cancel
+            </a>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

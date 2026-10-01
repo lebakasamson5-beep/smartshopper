@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Budget - Step 1{% endblock %}
+{% block content %}
+<div class="dashboard-container wizard">
+
+    <div class="wizard-progress">
+        <span class="wizard-step active">1</span>
+        <span class="wizard-bar"></span>
+        <span class="wizard-step">2</span>
+        <span class="wizard-bar"></span>
+        <span class="wizard-step">3</span>
+        <span class="wizard-bar"></span>
+        <span class="wizard-step">4</span>
+    </div>
+
+    <div class="wizard-card">
+        <h1>💰 Let's set your monthly budget</h1>
+        <p class="small-heading">
+            Before we plan your shopping, tell us how much you want to spend this month.
+        </p>
+
+        <form method="POST" action="{{ url_for('student.budget_step1') }}">
+            <div class="form-group">
+                <label for="monthly_limit">Monthly Budget (R)</label>
+                <input
+                    type="number"
+                    id="monthly_limit"
+                    name="monthly_limit"
+                    step="0.01"
+                    min="0"
+                    value="{{ budget.monthly_limit or '' }}"
+                    placeholder="Example: 2500"
+                    required
+                    autofocus
+                >
+            </div>
+
+            <div class="wizard-actions right">
+                <button type="submit" class="btn-primary">Next ▶</button>
+            </div>
+        </form>
+    </div>
+
+    <p class="wizard-footer">Step 1 of 4</p>
+</div>
+{% endblock %}
