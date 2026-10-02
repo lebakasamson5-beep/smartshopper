@@ -2,6 +2,8 @@
 # app.py — SmartShop AI
 # ==========================================
 
+import os
+
 from flask import Flask, render_template
 from flask_login import LoginManager
 
@@ -12,8 +14,6 @@ from models.product import Product
 from models.budget import Budget, BudgetItem
 from models.reservation import Reservation
 from models.deal import Deal
-from routes.location import location
-
 
 
 # ==========================================
@@ -69,13 +69,9 @@ def create_app():
     from routes.location import location
 
     app.register_blueprint(auth)
-
     app.register_blueprint(student)
-
     app.register_blueprint(company)
-
     app.register_blueprint(admin)
-
     app.register_blueprint(location)
 
 
@@ -95,9 +91,7 @@ def create_app():
     @app.route("/")
     def home():
 
-        return render_template(
-            "index.html"
-        )
+        return render_template("index.html")
 
 
     return app
@@ -111,27 +105,21 @@ app = create_app()
 
 
 # ==========================================
-# RUN APPLICATION
+# RUN APPLICATION (LOCAL ONLY)
 # ==========================================
+# This block only runs when you start the app
+# locally with `py app.py`. On Railway, gunicorn
+# imports `app` directly and starts its own server.
 
 if __name__ == "__main__":
 
     # ------------------------------------------
     # OPTIONAL: TEST THE GROCERY API ON STARTUP
     # ------------------------------------------
-    # This runs once when you start the app.
-    # It prints the API status and how many
-    # products came back, so you can quickly
-    # see if your API key and URL are correct.
-    #
-    # Comment this block out later if you want.
-    # ------------------------------------------
 
     try:
 
-        from services.grocery_api import (
-            search_grocery_products
-        )
+        from services.grocery_api import search_grocery_products
 
         print("=" * 50)
         print("TESTING GROCERY API...")
@@ -154,4 +142,11 @@ if __name__ == "__main__":
     # START FLASK
     # ------------------------------------------
 
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    debug = os.environ.get("FLASK_ENV") != "production"
+
+    app.run(
+        host="0.0.0.0",
+        port=port,
+        debug=debug,
+    )
